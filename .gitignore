@@ -1,0 +1,5 @@
+*.sm
+*.synctex.gz
+*.pyc
+*.pickle
+*.json
