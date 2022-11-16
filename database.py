@@ -301,6 +301,8 @@ class PATTree:
         # end while
         return cur_node.get_subtree_keys()
 
+    def delete(self, chord_seq: List[Chord], semi_infinite: bool = False):
+        raise NotImplementedError()
 
 class MusicDatabase:
     def __init__(self, Folksong_list: List[Folksong], cd_window_size: str, cd_window_step_unit: str) -> None:
