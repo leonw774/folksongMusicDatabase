@@ -115,19 +115,14 @@ def abs_note_seq_to_chrod_seq(
         window_size: str,
         window_step_unit: str) -> List[Chord]:
     """
-        the note_seq is expect to be sorted
-        the returned chords are NOT NORMALIZED
+        the abs_note_seq is expect to be sorted
+        the returned chords are ABSOLUTIVE
     """
 
-    # print(
-    #     '\n'.join(map(str, [
-    #         tonic,
-    #         scale_type,
-    #         metre,
-    #         window_size,
-    #         window_step_unit
-    #     ]))
-    # )
+    assert len(metre) == 2, 'metre is not 2-tuple'
+    assert window_size in ('bar', 'beat'), 'window_size should be \'bar\' or \'beat\''
+    assert window_step_unit in ('bar', 'beat'), 'window_step should be \'bar\' or \'beat\''
+
     detected_scale_type, detected_tonic = abs_note_seq_to_music_key(abs_note_seq)
 
     scale_weight = SCALE_WEIGHTS[detected_scale_type]
@@ -217,19 +212,22 @@ def abs_note_seq_to_chrod_seq(
     return chord_seq
 
 def normalized_note_seq_to_chrod_seq(
-        abs_note_seq: List[MusicNote],
+        normalized_note_seq: List[MusicNote],
         tonic: int,
         metre: Metre,
         window_size: str,
         window_step_unit: str) -> List[Chord]:
+    """
+        the normalized_note_seq is expect to be sorted
+        the returned chords are ABSOLUTIVE
+    """
 
-    if window_size not in ('bar', 'beat'):
-        raise ValueError('window_size should be \'bar\' or \'beat\'')
-    if window_step_unit not in ('bar', 'beat'):
-        raise ValueError('window_step should be \'bar\' or \'beat\'')
+    assert len(metre) == 2, 'metre is not 2-tuple'
     assert 0 <= tonic < 12
+    assert window_size in ('bar', 'beat'), 'window_size should be \'bar\' or \'beat\''
+    assert window_step_unit in ('bar', 'beat'), 'window_step should be \'bar\' or \'beat\''
 
-    abs_note_seq = denormalize_note_seq(abs_note_seq, tonic)
+    abs_note_seq = denormalize_note_seq(normalized_note_seq, tonic)
     chord_list = abs_note_seq_to_chrod_seq(
         abs_note_seq,
         metre,
