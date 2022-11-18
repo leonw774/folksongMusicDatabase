@@ -63,7 +63,7 @@ def main():
                             folksong_list.append(Folksong.from_lines(record_lines))
                         except NotImplementedError:
                             pass
-                        finally:
+                        except:
                             print(f'Exception @ line {i} in {sm_file_path}.')
                             print(format_exc())
                     record_begin_line_index = i + 1

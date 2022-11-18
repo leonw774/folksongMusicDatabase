@@ -13,6 +13,21 @@ JIANPU_NOTE_STATE = 1
 JIANPU_SUFFIX_STATE = 2
 JIANPU_SEPERATOR_STATE = 3
 
+PITCH_TO_JIANPU_NUMBER = [
+    ['1'],
+    ['1#', '2b'],
+    ['2'],
+    ['2#', '3b'],
+    ['3'],
+    ['4'],
+    ['4#', '5b'],
+    ['5'],
+    ['5#', '6b'],
+    ['6'],
+    ['6#', '7b'],
+    ['7b'],
+]
+
 def jianpu_to_note_seq(melody_str: str, time_unit: int, metre: Metre) -> List[MusicNote]:
     note_seq: List[MusicNote] = []
     measure_number = 1
@@ -37,6 +52,7 @@ def jianpu_to_note_seq(melody_str: str, time_unit: int, metre: Metre) -> List[Mu
                 is_triplet = False
             elif c == '|':
                 if measure_number == 1:
+                    assert len(note_seq) > 0, 'Empty first measure'
                     last_note_end = note_seq[-1].end
                     measure_length = int(metre[0] * 4 / metre[1])
                     if cur_time != measure_length:

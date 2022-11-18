@@ -41,7 +41,7 @@ from typing import List, Mapping, Set, Tuple
 
 from tqdm import tqdm
 
-from musical_things import MusicNote, Chord, Metre, NOTE_NAME_TO_NUMBER, NOTE_NAME, chord_to_str
+from musical_things import MusicNote, Chord, Metre, NOTE_NAME_TO_NUMBER, NOTE_NAME, chord_to_str, chord_seq_to_str
 from detector import (
     normalized_note_seq_to_scale_type,
     abs_note_seq_to_chrod_seq,
@@ -75,7 +75,7 @@ class Folksong:
         self.tonic = tonic
         self.metre = metre
         self.melody = melody
-        self.melody_str = melody_str,
+        self.melody_str = melody_str
         self.lyrics = lyrics
 
     def __str__(self):
@@ -108,6 +108,7 @@ class Folksong:
         tonic = -1
         metre = (0, 0)
         melody = ""
+        melody_str = ""
         lyrics = ""
         for l in deseperated_lines:
             if l.startswith(TITLE_TAG):
@@ -283,8 +284,6 @@ class PATTree:
 
                 if found_same_start > 0:
                     # print('  link to', child_node.nid, ':', chord_seq_to_str(link), 'found_same_start:', found_same_start)
-                    if found_same_start != len(link):
-                        continue
                     if found_same_start == len(s):
                         # found
                         s = [] # leave while loop

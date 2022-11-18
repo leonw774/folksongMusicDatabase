@@ -1,9 +1,7 @@
 from math import exp
 from typing import List
 
-from musical_things import (
-    MusicNote, Chord, MusicKey, Metre, chord_to_str
-)
+from musical_things import MusicNote, Chord, MusicKey, Metre, chord_to_str
 
 # Chord weights
 CHORD_MAJOR_W       = [10, -5, -2, -5, 8, -2, -1, 8, -2, -5, -1, -2]
