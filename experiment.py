@@ -8,7 +8,13 @@ from tqdm import tqdm
 from database import MusicDatabase
 from detector import denormalize_note_seq, abs_note_seq_to_chrod_seq
 from musical_things import MusicNote, chord_seq_to_str
-from jianpu import jianpu_to_note_seq, JIANPU_NUMBER_TO_PITCH, PITCH_TO_JIANPU_NUMBER
+from jianpu import (
+    jianpu_to_note_seq,
+    JIANPU_NUMBER_TO_PITCH, PITCH_TO_JIANPU_NUMBER,
+    JIANPU_PREFIXES, JIANPU_NOTES, JIANPU_SUFFIXES
+)
+
+JIANPU_EDITABLES = JIANPU_PREFIXES.union(JIANPU_NOTES).union(JIANPU_SUFFIXES)
 
 def read_args() -> Namespace:
     parser = ArgumentParser()
@@ -60,23 +66,12 @@ def corrupt_jianpu_str(
             rand_index = random.randint(0, len(corrupted_jianpu_str)-1)
             corrupted_jianpu_str = corrupted_jianpu_str[:rand_index] + corrupted_jianpu_str[rand_index+1:]
         else:
-            digit_index = [
-                i for i, c in enumerate(corrupted_jianpu_str) if c.isdigit()
-            ]
-            rand_index = random.choice(digit_index)
-            rand_index_pitch = JIANPU_NUMBER_TO_PITCH[int(corrupted_jianpu_str[rand_index])]
-            sigma = 6
-            new_pitch = round(random.gauss(rand_index_pitch, sigma))
-            prefix = ''
-            while new_pitch >= 12:
-                prefix += '+'
-                new_pitch -= 12
-            while new_pitch < 0:
-                prefix += '-'
-                new_pitch += 12
-            new_pitch_str = prefix + random.choice(PITCH_TO_JIANPU_NUMBER[new_pitch])
-            corrupted_jianpu_str = corrupted_jianpu_str[:rand_index] + new_pitch_str + corrupted_jianpu_str[rand_index+1:]
+            rand_index = random.randint(0, len(corrupted_jianpu_str)-1)
+            c = corrupted_jianpu_str[rand_index]
 
+            assert c in JIANPU_EDITABLES
+            rand_char = random.choice(list(JIANPU_EDITABLES))
+            corrupted_jianpu_str = corrupted_jianpu_str[:rand_index] + rand_char + corrupted_jianpu_str[rand_index+1:]
     return corrupted_jianpu_str
 
 def corrupt_note_seq(
