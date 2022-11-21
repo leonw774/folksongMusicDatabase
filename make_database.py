@@ -48,7 +48,7 @@ def main():
     total_record = 0
     for sm_file_path in tqdm(all_sm_file_path):
         # print(sm_file_path)
-        with open(sm_file_path, 'r', encoding='utf8') as f:
+        with open(sm_file_path, 'r', encoding='utf8', errors='ignore') as f:
             all_lines = f.readlines()
             all_lines += ['\n'] # to find last record
             record_begin_line_index = 0
