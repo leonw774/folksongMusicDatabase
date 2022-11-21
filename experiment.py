@@ -6,15 +6,13 @@ import random
 from tqdm import tqdm
 
 from database import MusicDatabase
-from detector import denormalize_note_seq, abs_note_seq_to_chrod_seq
-from musical_things import MusicNote, chord_seq_to_str
+from detector import denormalize_note_seq
+from musical_things import MusicNote
 from jianpu import (
-    jianpu_to_note_seq,
-    JIANPU_NUMBER_TO_PITCH, PITCH_TO_JIANPU_NUMBER,
-    JIANPU_PREFIXES, JIANPU_NOTES, JIANPU_SUFFIXES
+    jianpu_to_note_seq, JIANPU_PREFIXES, JIANPU_NOTES, JIANPU_SUFFIXES
 )
 
-JIANPU_EDITABLES = JIANPU_PREFIXES.union(JIANPU_NOTES).union(JIANPU_SUFFIXES)
+JIANPU_EDITABLES = JIANPU_PREFIXES.union(JIANPU_NOTES).union(JIANPU_SUFFIXES).difference(['^', 'x'])
 
 def read_args() -> Namespace:
     parser = ArgumentParser()

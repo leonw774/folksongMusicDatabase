@@ -32,8 +32,8 @@ Our music database created from Essen Folksong Database will have:
 
 Reference:
 
-    - http://www.cs.uu.nl/events/dech1999/dahlig/tsld001.htm
-    - https://ldzhangyx.github.io/2019/07/26/esac/
+- http://www.cs.uu.nl/events/dech1999/dahlig/tsld001.htm
+- https://ldzhangyx.github.io/2019/07/26/esac/
 
 """
 

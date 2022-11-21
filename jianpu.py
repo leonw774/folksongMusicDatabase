@@ -80,6 +80,7 @@ def jianpu_to_note_seq(melody_str: str, time_unit: int, metre: Metre) -> List[Mu
             if c == '0':
                 is_rest = True
             elif c == '^':
+                assert len(note_seq) > 0, 'No note before tie'
                 if is_triplet:
                     note_seq[-1].end += duration
                 else:
@@ -102,6 +103,7 @@ def jianpu_to_note_seq(melody_str: str, time_unit: int, metre: Metre) -> List[Mu
         elif c in JIANPU_SUFFIXES:
             assert cur_state == JIANPU_NOTE_STATE or cur_state == JIANPU_SUFFIX_STATE
             octave = 0
+            assert len(note_seq) > 0, 'No note before suffix'
             if c == '#':
                 note_seq[-1].pitch += 1
             elif c == 'b':
