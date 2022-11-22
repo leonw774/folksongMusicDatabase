@@ -28,15 +28,7 @@ SCALE_WEIGHTS = [
     SCALE_MELODIC_MINOR_W,
 ]
 
-# control how much chord_scale_prob and chord_window_prob contribute to the final score
-# window_score = (chord_scale_prob ** ALPHA) * (chord_window_prob ** BETA)
-ALPHA = 0.3
-BETA = 1.0
-
-# use higher temperature to prevent one chord get all the probability
-SCALE_TEMPERATURE = 12.0
 NEG_MAX = float('-inf')
-
 
 def argmax(x):
     return max(range(len(x)), key=lambda i: x[i])
@@ -111,10 +103,20 @@ def abs_note_seq_to_chrod_seq(
         abs_note_seq: List[MusicNote],
         metre: Metre,
         window_size: str,
-        window_step_unit: str) -> List[Chord]:
+        window_step_unit: str,
+        alpha: float = 0.3,
+        beta: float = 1.0,
+        tau: float = 12) -> List[Chord]:
     """
         the abs_note_seq is expect to be sorted
         the returned chords are ABSOLUTIVE
+
+        alpha and beta control how much chord_scale_prob and chord_window_prob contribute to the final score
+
+            window_score = (chord_scale_prob ** ALPHA) * (chord_window_prob ** BETA)
+
+        tau is the temperature of to use at softmaxing chord_scale_prob.
+        we choose to use higher temperature to prevent one chord get all the probability
     """
 
     assert len(metre) == 2, 'metre is not 2-tuple'
@@ -140,7 +142,7 @@ def abs_note_seq_to_chrod_seq(
         i - k if i > k else NEG_MAX
         for i in chord_scale_scores
     ]
-    chord_scale_prob = softmax(chord_scale_scores, temperature=SCALE_TEMPERATURE)
+    chord_scale_prob = softmax(chord_scale_scores, temperature=tau)
 
     # print('---')
     # print('\n'.join([
@@ -190,7 +192,7 @@ def abs_note_seq_to_chrod_seq(
             chord_window_prob = softmax(chord_window_score)
             # print('---\n', window_start, '\n', chord_window_prob)
             chord_window_scale_prob = [
-                (csp ** ALPHA) * (cwp ** BETA)
+                (csp ** alpha) * (cwp ** beta)
                 for cwp, csp in zip(chord_window_prob, chord_scale_prob)
             ]
             best_chord_index = argmax(chord_window_scale_prob)
@@ -214,7 +216,10 @@ def normalized_note_seq_to_chrod_seq(
         tonic: int,
         metre: Metre,
         window_size: str,
-        window_step_unit: str) -> List[Chord]:
+        window_step_unit: str,
+        alpha: float = 0.3,
+        beta: float = 1.0,
+        tau: float = 12) -> List[Chord]:
     """
         the normalized_note_seq is expect to be sorted
         the returned chords are ABSOLUTIVE
@@ -230,6 +235,9 @@ def normalized_note_seq_to_chrod_seq(
         abs_note_seq,
         metre,
         window_size,
-        window_step_unit
+        window_step_unit,
+        alpha,
+        beta,
+        tau
     )
     return chord_list

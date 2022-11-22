@@ -305,7 +305,13 @@ class PATTree:
 
 
 class MusicDatabase:
-    def __init__(self, Folksong_list: List[Folksong], cd_window_size: str, cd_window_step_unit: str) -> None:
+    def __init__(self,
+            Folksong_list: List[Folksong],
+            cd_window_size: str,
+            cd_window_step_unit: str,
+            alpha: float = 0.3,
+            beta: float = 1.0,
+            tau: float = 12) -> None:
         self.folksongs = {
             f.key: f
             for f in Folksong_list
@@ -322,19 +328,36 @@ class MusicDatabase:
         self.folksong_chrod_seq: Mapping[FolksongKey, List[Chord]] = dict()
         self.cd_window_size = cd_window_size
         self.cd_window_step_unit = cd_window_step_unit
+        self.alpha = alpha
+        self.beta = beta
+        self.tau = tau
         self.pat_tree = PATTree()
         for s, f in tqdm(self.folksongs.items(), desc='Creating PAT-tree...'):
             scale_type = normalized_note_seq_to_scale_type(f.melody)
             self.folksong_scale_type[f.key] = scale_type
             detected_chord_seq = normalized_note_seq_to_chrod_seq(
-                f.melody, f.tonic, f.metre, cd_window_size, cd_window_step_unit
+                f.melody, f.tonic, f.metre, cd_window_size, cd_window_step_unit, alpha, beta, tau
             )
             # print(chord_seq_to_str(detected_chord_seq))
             self.folksong_chrod_seq[f.key] = detected_chord_seq
             self.pat_tree.insert(detected_chord_seq, s)
 
-    def search_by_abs_note_seq(self, q_abs_note_seq: List[MusicNote], metre: Metre) -> Set[FolksongKey]:
-        chord_seq = abs_note_seq_to_chrod_seq(q_abs_note_seq, metre, self.cd_window_size, self.cd_window_step_unit)
+    def __len__(self):
+        return len(self.folksongs)
+
+    def search_by_abs_note_seq(
+            self,
+            q_abs_note_seq: List[MusicNote],
+            metre: Metre,
+            alpha: float = None,
+            beta: float = None,
+            tau: float = None) -> Set[FolksongKey]:
+        alpha = self.alpha if alpha is None else alpha
+        beta = self.beta if beta is None else beta
+        tau = self.tau if tau is None else tau
+        chord_seq = abs_note_seq_to_chrod_seq(
+            q_abs_note_seq, metre, self.cd_window_size, self.cd_window_step_unit, alpha, beta, tau
+        )
         # print('search_by_abs_note_seq: dected chord:', chord_seq_to_str(chord_seq))
         retrieved_signatures = self.pat_tree.search(chord_seq)
         return retrieved_signatures
@@ -346,6 +369,9 @@ class MusicDatabase:
             'folksong_chrod_seq': self.folksong_chrod_seq,
             'cd_window_size': self.cd_window_size,
             'cd_window_step_unit': self.cd_window_step_unit,
+            'alpha': self.alpha,
+            'beta': self.beta,
+            'tau': self.tau,
             'pat_tree': {
                 'head': self.pat_tree.head.to_dict()
             }

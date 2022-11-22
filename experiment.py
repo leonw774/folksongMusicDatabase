@@ -24,7 +24,7 @@ def read_args() -> Namespace:
         '-n',
         dest='test_number',
         type=int,
-        default=1000
+        default=-1
     )
     parser.add_argument(
         '--corrupt-number', '-c',
@@ -110,14 +110,29 @@ def corrupt_note_seq(
 def main():
     args = read_args()
     md: MusicDatabase = pickle.load(open(args.dataset_path, 'rb'))
-    rand_folksongs = random.choices(list(md.folksongs.values()), k=args.test_number)
+    print(md.alpha, md.beta, md.tau)
+    if args.test_number > 0:
+        rand_folksongs = random.choices(list(md.folksongs.values()), k=args.test_number)
+    else:
+        rand_folksongs = list(md.folksongs.values())
 
+    original_hits = 0
+    retrieval_precisions = []
     note_seq_hits= []
     jianpu_hits = []
 
     for f in tqdm(rand_folksongs):
         note_seq = f.melody
         # print('original  chord_seq:', chord_seq_to_str(md.folksong_chrod_seq[f.key]))
+
+        abs_note_seq = denormalize_note_seq(note_seq, f.tonic)
+        retrieved_folksongs = md.search_by_abs_note_seq(abs_note_seq, f.metre)
+        if f.key in retrieved_folksongs:
+            original_hits += 1
+            retrieval_precisions.append(1/len(retrieved_folksongs))
+        else:
+            retrieval_precisions.append(0)
+
         corrupted_note_seq = corrupt_note_seq(
             note_seq,
             args.corrupt_number,
@@ -155,8 +170,10 @@ def main():
             except (ValueError, AssertionError):
                 try_count += 1
 
-    print('note_seq hit rate:', sum(note_seq_hits) / len(note_seq_hits))
-    print('jianpu hit rate:', sum(jianpu_hits) / len(jianpu_hits))
+    print('avg precision:', sum(retrieval_precisions) / len(retrieval_precisions))
+    print('no corruption hit rate:', original_hits / len(rand_folksongs))
+    print('note_seq corruption hit rate:', sum(note_seq_hits) / len(note_seq_hits))
+    print('jianpu corruption hit rate:', sum(jianpu_hits) / len(jianpu_hits))
 
 
 if __name__ == '__main__':

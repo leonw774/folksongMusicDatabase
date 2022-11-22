@@ -36,6 +36,21 @@ def read_args() -> Namespace:
         default='bar'
     )
     parser.add_argument(
+        '-a',
+        type=float,
+        default=0.3
+    )
+    parser.add_argument(
+        '-b',
+        type=float,
+        default=1.0
+    )
+    parser.add_argument(
+        '-t',
+        type=float,
+        default=12.0
+    )
+    parser.add_argument(
         '--dump-pattree-json',
         action='store_true'
     )
@@ -70,7 +85,14 @@ def main():
                     record_end_line_index = i + 1
     print(f'successfully parsed {len(folksong_list)} out of {total_record} records')
 
-    md = MusicDatabase(folksong_list, cd_window_size=args.window_size, cd_window_step_unit=args.window_step_unit)
+    md = MusicDatabase(
+        folksong_list,
+        cd_window_size=args.window_size,
+        cd_window_step_unit=args.window_step_unit,
+        alpha=args.a,
+        beta=args.b,
+        tau=args.t
+    )
     pickle.dump(md, open(args.output_file_path, 'wb+'), protocol=pickle.HIGHEST_PROTOCOL)
 
     # dump json of PAT-tree

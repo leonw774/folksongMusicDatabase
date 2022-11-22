@@ -29,6 +29,8 @@ For now, the search function only receive music query in json with certain forma
 python3 ./search.py path/to/database/pickled/file path/to/query/json/file
 ```
 
-### Do expriment on input fault tolerance
+### Do expriment
 
-WIP
+```
+python3 ./experiment.py path/to/database/pickled/file -c NUMBER_OF_CORRUPTION -n NUMBER_OF_TEST
+```
