@@ -39,6 +39,10 @@ def read_args() -> Namespace:
         '--no-edition',
         action='store_true'
     )
+    parser.add_argument(
+        '-t',
+        action='store_true'
+    )
     return parser.parse_args()
 
 def corrupt_jianpu_str(
@@ -119,68 +123,67 @@ def main():
     else:
         rand_folksongs = list(md.folksongs.values())
 
-
     retrieval_precisions = []
     note_seq_hits = []
     jianpu_hits = []
 
-    for f in tqdm(rand_folksongs):
-        note_seq = f.melody
-        # print('original  chord_seq:', chord_seq_to_str(md.folksong_chrod_seq[f.key]))
+    if args.t:
+        rand_folksongs = tqdm(rand_folksongs)
 
-        abs_note_seq = denormalize_note_seq(note_seq, f.tonic)
-        retrieved_folksongs = md.search_by_abs_note_seq(abs_note_seq, f.metre)
-        assert f.key in retrieved_folksongs, 'Can not find complete melody!?'
-        retrieval_precisions.append(1/len(retrieved_folksongs))
+    if args.corrupt_number == 0:
+        for f in rand_folksongs:
+            note_seq = f.melody
+            abs_note_seq = denormalize_note_seq(note_seq, f.tonic)
+            retrieved_folksongs = md.search_by_abs_note_seq(abs_note_seq, f.metre)
+            assert f.key in retrieved_folksongs, 'Can not find complete melody!?'
+            retrieval_precisions.append(1/len(retrieved_folksongs))
+        print('average precision:', sum(retrieval_precisions) / len(retrieval_precisions))
 
-        try_count = 0
-        while try_count < 100:
-            try:
-                corrupted_note_seq = corrupt_note_seq(
-                    note_seq,
-                    args.corrupt_number,
-                    edition=(not args.no_edition),
-                    deletion=(not args.no_deletion)
-                )
-                abs_corrupted_note_seq = denormalize_note_seq(corrupted_note_seq, f.tonic)
-                # print(
-                #     'corrupted chord_seq:',
-                #     chord_seq_to_str(
-                #         abs_note_seq_to_chrod_seq(abs_corrupted_note_seq, f.metre, md.cd_window_size, md.cd_window_step_unit)
-                #     )
-                # )
-                assert len(abs_corrupted_note_seq) > 0
-                retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_note_seq, f.metre)
-                # print('# of retrieved_folksongs:', len(retrieved_folksongs))
-                note_seq_hits.append((1 if f.key in retrieved_folksongs else 0))
-                break
-            except (ValueError, AssertionError):
-                try_count += 1
+    else:
+        for f in rand_folksongs:
+            note_seq = f.melody
+            # print('original  chord_seq:', chord_seq_to_str(md.folksong_chrod_seq[f.key]))
+            try_count = 0
+            while try_count < 100:
+                try:
+                    corrupted_note_seq = corrupt_note_seq(
+                        note_seq,
+                        args.corrupt_number,
+                        edition=(not args.no_edition),
+                        deletion=(not args.no_deletion)
+                    )
+                    abs_corrupted_note_seq = denormalize_note_seq(corrupted_note_seq, f.tonic)
+                    assert len(abs_corrupted_note_seq) > 0
+                    retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_note_seq, f.metre)
+                    # print('# of retrieved_folksongs:', len(retrieved_folksongs))
+                    note_seq_hits.append((1 if f.key in retrieved_folksongs else 0))
+                    break
+                except (ValueError, AssertionError):
+                    try_count += 1
 
-        jianpu_str = f.melody_str
-        # print(jianpu_str)
-        try_count = 0
-        while try_count < 100:
-            try:
-                corrupted_jianpu_str = corrupt_jianpu_str(
-                    jianpu_str,
-                    args.corrupt_number,
-                    edition=(not args.no_edition),
-                    deletion=(not args.no_deletion)
-                )
-                # print(corrupted_jianpu_str)
-                corrupted_jp_str_note_seq = jianpu_to_note_seq(corrupted_jianpu_str, f.time_unit, f.metre)
-                assert len(corrupted_jp_str_note_seq) > 0
-                abs_corrupted_jp_str_note_seq = denormalize_note_seq(corrupted_jp_str_note_seq, f.tonic)
-                retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_jp_str_note_seq, f.metre)
-                jianpu_hits.append((1 if f.key in retrieved_folksongs else 0))
-                break
-            except (ValueError, AssertionError):
-                try_count += 1
+            jianpu_str = f.melody_str
+            # print(jianpu_str)
+            try_count = 0
+            while try_count < 100:
+                try:
+                    corrupted_jianpu_str = corrupt_jianpu_str(
+                        jianpu_str,
+                        args.corrupt_number,
+                        edition=(not args.no_edition),
+                        deletion=(not args.no_deletion)
+                    )
+                    # print(corrupted_jianpu_str)
+                    corrupted_jp_str_note_seq = jianpu_to_note_seq(corrupted_jianpu_str, f.time_unit, f.metre)
+                    assert len(corrupted_jp_str_note_seq) > 0
+                    abs_corrupted_jp_str_note_seq = denormalize_note_seq(corrupted_jp_str_note_seq, f.tonic)
+                    retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_jp_str_note_seq, f.metre)
+                    jianpu_hits.append((1 if f.key in retrieved_folksongs else 0))
+                    break
+                except (ValueError, AssertionError):
+                    try_count += 1
 
-    print('average precision:', sum(retrieval_precisions) / len(retrieval_precisions))
-    print('note_seq corruption hit rate:', sum(note_seq_hits) / len(note_seq_hits))
-    print('jianpu corruption hit rate:', sum(jianpu_hits) / len(jianpu_hits))
+        print('note_seq corruption hit rate:', sum(note_seq_hits) / len(note_seq_hits) if len(note_seq_hits) > 0 else 0)
+        print('jianpu corruption hit rate:', sum(jianpu_hits) / len(jianpu_hits) if len(jianpu_hits) > 0 else 0)
 
 
 if __name__ == '__main__':

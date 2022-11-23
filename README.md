@@ -48,4 +48,4 @@ We will collect three values in experiment result (Detail in experiment report)
 - Note-tuple corruption hit rate
 - Jianpu corruption hit rate
 
-Run the shell script `run_experiments.sh` then collect all data
+Run the shell script `run_experiments.sh` to collect all data

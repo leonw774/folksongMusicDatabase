@@ -41,7 +41,7 @@ def read_args() -> Namespace:
     parser.add_argument(
         '-t',
         type=float,
-        default=12.0
+        default=8.0
     )
     parser.add_argument(
         '-v',
@@ -59,7 +59,7 @@ def main():
     folksong_list:List[Folksong] = []
     all_sm_file_path = glob.glob(f'{args.dataset_path}/**/*.sm', recursive=True)
     total_record = 0
-    for sm_file_path in tqdm(all_sm_file_path):
+    for sm_file_path in all_sm_file_path:
         # print(sm_file_path)
         with open(sm_file_path, 'r', encoding='utf8', errors='ignore') as f:
             all_lines = f.readlines()

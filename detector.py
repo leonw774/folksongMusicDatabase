@@ -1,27 +1,33 @@
 from math import exp
 from typing import List
 
-from musical_things import MusicNote, Chord, MusicKey, Metre, OLD_CHORD_NOTES
+from musical_things import MusicNote, Chord, MusicKey, Metre
 
 # Chord weights
-SINGLE_NOTE_W      = [10, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5]
-MAJOR_THIRD_W       = [10, -5, -2, -5, 8, -2, -5, -5, -5, -5, -5, -5]
-MINOR_THIRD_W       = [10, -5, -2, 8, -5, -2, -5, -5, -5, -5, -5, 5]
-MAJOR_CHORD_W       = [10, -5, -2, -5, 8, -1, -2, 8, -5, -2, -1, -2]
-MINOR_CHORD_W       = [10, -5, -2, 8, -5, -1, -2, 8, -5, -2, -1, -2]
-AUGMENTED_CHORD_W   = [8, -4, -2, -4, 8, -4, -2, -4, 8, -4, -2, -4]
-DIMINISH_CHORD_W    = [8, -4, -4, 8, -4, -4, 8, -4, -4, 0, -4, -4]
+SINGLE_NOTE_W = [24, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4]
+MAJOR_THIRD_W = [13, -4, -4, -4, 12, -4, -4, -4, -4, -4, -4, -4]
+MINOR_THIRD_W = [13, -4, -4, 12, -4, -4, -4, -4, -4, -4, -4, -4]
+MAJOR_TRIAD_W = [9, -4, -4, -4, 8, -4, -4, 9, -4, -4, -4, -4]
+MINOR_TRIAD_W = [9, -4, -4, 8, -4, -4, -4, 9, -4, -4, -4, -4]
+MAJOR_SEVEN_W = [7, -4, -4, -4, 6, -4, -4, 6, -4, -4, -4, 6]
+MINOR_SEVEN_W = [7, -4, -4, 6, -4, -4, -4, 6, -4, -4, 6, -4]
+DOMIN_SEVEN_W = [7, -4, -4, -4, 6, -4, -4, 6, -4, -4, 6, -4]
 
 CHORD_WEIGHTS = [
     SINGLE_NOTE_W,
     MAJOR_THIRD_W,
     MINOR_THIRD_W,
-    MAJOR_CHORD_W,
-    MINOR_CHORD_W,
-    AUGMENTED_CHORD_W,
-    DIMINISH_CHORD_W
+    MAJOR_TRIAD_W,
+    MINOR_TRIAD_W,
+    MAJOR_SEVEN_W,
+    MINOR_SEVEN_W,
+    DOMIN_SEVEN_W
 ]
 
+# map the major, minor, domin as the same so that new and old chord detection have same 4 types
+CHORD_TYPE_MAP = [0, 1, 1, 3, 3, 7, 7, 7]
+
+# Scale weight
 SCALE_MAJOR_W           = [10, -10, 10, -10, 10, 10, -8, 10, -10, 10, -10, 10]
 SCALE_NATURAL_MINOR_W   = [10, -10, 10, 10, -10, 10, -8, 10, 10, -10, 10, -10]
 SCALE_HARMONIC_MINOR_W  = [10, -10, 10, 10, -10, 10, -10, 10, 10, -10, -10, 10]
@@ -33,6 +39,15 @@ SCALE_WEIGHTS = [
     SCALE_HARMONIC_MINOR_W,
     SCALE_MELODIC_MINOR_W,
 ]
+
+
+OLD_CHORD_NOTES = [
+    [[0], [], [2], [], [4], [5], [], [7], [], [9], [], []],
+    [[0, 4], [], [2, 5], [], [4, 7], [5, 9], [], [7, 11], [], [9, 0], [], []],
+    [[0, 4, 7], [], [2, 5, 8], [], [4, 7, 11], [5, 9, 0], [], [7, 11, 2], [], [9, 0, 4], [], []],
+    [[0, 4, 7, 11], [], [2, 5, 8, 0], [], [4, 7, 11, 2], [5, 9, 0, 4], [], [7, 11, 2, 5], [], [9, 0, 4, 7], [], []],
+]
+
 
 NEG_MAX = float('-inf')
 
@@ -177,6 +192,7 @@ def abs_note_seq_to_chrod_seq(
             ]
             best_chord_index = argmax(chord_window_scale_prob)
             best_chord_type, best_root = best_chord_index//12, best_chord_index%12
+            best_chord_type = CHORD_TYPE_MAP[best_chord_type]
             best_chord = Chord(best_chord_type, best_root)
 
             # should we remove repitition?

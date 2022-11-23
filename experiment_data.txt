@@ -1,0 +1,91 @@
+c=0
+use original chord detection
+average precision: 0.9238063060293026
+0.0 1.0 8.0
+average precision: 0.9635581292851535
+0.3 1.0 8.0
+average precision: 0.9722510962209514
+0.6 1.0 8.0
+average precision: 0.9762695817261102
+1.0 1.0 8.0
+average precision: 0.9778986200251205
+c=1
+use original chord detection
+note_seq corruption hit rate: 0.6756569847856155
+jianpu corruption hit rate: 0.5155601659751037
+0.0 1.0 8.0
+note_seq corruption hit rate: 0.6007952973720608
+jianpu corruption hit rate: 0.43758644536652835
+0.3 1.0 8.0
+note_seq corruption hit rate: 0.5663900414937759
+jianpu corruption hit rate: 0.426521438450899
+0.6 1.0 8.0
+note_seq corruption hit rate: 0.5352697095435685
+jianpu corruption hit rate: 0.4071576763485477
+1.0 1.0 8.0
+note_seq corruption hit rate: 0.52783540802213
+jianpu corruption hit rate: 0.39730290456431533
+c=2
+use original chord detection
+note_seq corruption hit rate: 0.4630013831258645
+jianpu corruption hit rate: 0.2823305670816044
+0.0 1.0 8.0
+note_seq corruption hit rate: 0.39540110650069155
+jianpu corruption hit rate: 0.21853388658367912
+0.3 1.0 8.0
+note_seq corruption hit rate: 0.3262448132780083
+jianpu corruption hit rate: 0.19190871369294607
+0.6 1.0 8.0
+note_seq corruption hit rate: 0.3008298755186722
+jianpu corruption hit rate: 0.18948824343015214
+1.0 1.0 8.0
+note_seq corruption hit rate: 0.2793914246196404
+jianpu corruption hit rate: 0.17323651452282157
+c=3
+use original chord detection
+note_seq corruption hit rate: 0.3333333333333333
+jianpu corruption hit rate: 0.1713347164591978
+0.0 1.0 8.0
+note_seq corruption hit rate: 0.258298755186722
+jianpu corruption hit rate: 0.11808437067773167
+0.3 1.0 8.0
+note_seq corruption hit rate: 0.19813278008298754
+jianpu corruption hit rate: 0.10580912863070539
+0.6 1.0 8.0
+note_seq corruption hit rate: 0.1739280774550484
+jianpu corruption hit rate: 0.09076763485477178
+1.0 1.0 8.0
+note_seq corruption hit rate: 0.17600276625172892
+jianpu corruption hit rate: 0.09145919778699861
+c=4
+use original chord detection
+note_seq corruption hit rate: 0.23703319502074688
+jianpu corruption hit rate: 0.09699170124481328
+0.0 1.0 8.0
+note_seq corruption hit rate: 0.17652143845089904
+jianpu corruption hit rate: 0.06898340248962656
+0.3 1.0 8.0
+note_seq corruption hit rate: 0.11894882434301521
+jianpu corruption hit rate: 0.06016597510373444
+0.6 1.0 8.0
+note_seq corruption hit rate: 0.10338865836791147
+jianpu corruption hit rate: 0.04702627939142462
+1.0 1.0 8.0
+note_seq corruption hit rate: 0.10062240663900415
+jianpu corruption hit rate: 0.042876901798063624
+c=5
+use original chord detection
+note_seq corruption hit rate: 0.17634854771784234
+jianpu corruption hit rate: 0.06950207468879668
+0.0 1.0 8.0
+note_seq corruption hit rate: 0.11531811894882435
+jianpu corruption hit rate: 0.04771784232365145
+0.3 1.0 8.0
+note_seq corruption hit rate: 0.08316044260027662
+jianpu corruption hit rate: 0.0338865836791148
+0.6 1.0 8.0
+note_seq corruption hit rate: 0.0636237897648686
+jianpu corruption hit rate: 0.028354080221300138
+1.0 1.0 8.0
+note_seq corruption hit rate: 0.056189488243430154
+jianpu corruption hit rate: 0.024031811894882436

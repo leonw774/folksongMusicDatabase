@@ -1,8 +1,27 @@
 # Chord Representation Model
 
+## Pitch Class Profile
 
-## Chord Detection Algorithm
+A pitch class profile (PCP) of a span of music is a vector that encode the occurence fequency of the 12 pitch classes in the span. A pitch class profile $p = (f_1, f_2, \ldots, f_{12})$ where $f_i$ is the occurence frequency of pitch class $i$.
 
+## Original Chord Detection Algorithm
+
+The chord detection algorithm in the original paper are rootes on six pitches (C, D, E, F, G, A) and four types of "chord":
+
+- Single
+- Third
+- Triad
+- Seventh
+
+The algorithm first collect the pitch profile in each bar, and uses five principles compare the pitch profile and a chord candidate to progressively eliminate candidate chords until only one candidate left.
+
+## New Chord Detection Algorithm
+
+The new chord detection algorithm we are using in this project is based on Fujishima's (1999) PCP matching method that find the best chord of a PCP by the maximum matching score. The matching score between PCP $p$ and a given chord $C$ is computed by doing inner product between the $p$ and the hand-crafted weight of the chord $W_C$
+
+$$
+\text{matching score}(p, C) = \sum_{i=1}^{12} f_i \times {W_C}_i
+$$
 
 ## PAT-Tree
 
