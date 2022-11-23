@@ -4,18 +4,22 @@ from typing import List
 from musical_things import MusicNote, Chord, MusicKey, Metre, OLD_CHORD_NOTES
 
 # Chord weights
-CHORD_SINGLE_W      = [10, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5]
-CHORD_MAJOR_W       = [10, -5, -2, -5, 8, -1, -2, 8, -5, -2, -1, -2]
-CHORD_MINOR_W       = [10, -5, -2, 8, -5, -1, -2, 8, -5, -2, -1, -2]
-CHORD_AUGMENTED_W   = [8, -4, -2, -4, 8, -4, -2, -4, 8, -4, -2, -4]
-CHORD_DIMINISH_W    = [8, -4, -4, 8, -4, -4, 8, -4, -4, 0, -4, -4]
+SINGLE_NOTE_W      = [10, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5]
+MAJOR_THIRD_W       = [10, -5, -2, -5, 8, -2, -5, -5, -5, -5, -5, -5]
+MINOR_THIRD_W       = [10, -5, -2, 8, -5, -2, -5, -5, -5, -5, -5, 5]
+MAJOR_CHORD_W       = [10, -5, -2, -5, 8, -1, -2, 8, -5, -2, -1, -2]
+MINOR_CHORD_W       = [10, -5, -2, 8, -5, -1, -2, 8, -5, -2, -1, -2]
+AUGMENTED_CHORD_W   = [8, -4, -2, -4, 8, -4, -2, -4, 8, -4, -2, -4]
+DIMINISH_CHORD_W    = [8, -4, -4, 8, -4, -4, 8, -4, -4, 0, -4, -4]
 
 CHORD_WEIGHTS = [
-    CHORD_SINGLE_W,
-    CHORD_MAJOR_W,
-    CHORD_MINOR_W,
-    CHORD_AUGMENTED_W,
-    CHORD_DIMINISH_W
+    SINGLE_NOTE_W,
+    MAJOR_THIRD_W,
+    MINOR_THIRD_W,
+    MAJOR_CHORD_W,
+    MINOR_CHORD_W,
+    AUGMENTED_CHORD_W,
+    DIMINISH_CHORD_W
 ]
 
 SCALE_MAJOR_W           = [10, -10, 10, -10, 10, 10, -8, 10, -10, 10, -10, 10]
@@ -105,8 +109,7 @@ def abs_note_seq_to_chrod_seq(
 
     scale_weight = SCALE_WEIGHTS[detected_scale_type]
     chord_scale_scores = []
-    for chord_type in range(5):
-        w = CHORD_WEIGHTS[chord_type]
+    for w in CHORD_WEIGHTS:
         for root in range(12):
             _w = w[-root:] + w[:-root]
             chord_scale_scores.append(
@@ -160,8 +163,7 @@ def abs_note_seq_to_chrod_seq(
                 continue
 
             chord_window_score = []
-            for chord_type in range(5):
-                w = CHORD_WEIGHTS[chord_type]
+            for w in CHORD_WEIGHTS:
                 for root in range(12):
                     _w = w[-root:] + w[:-root]
                     chord_window_score.append(
