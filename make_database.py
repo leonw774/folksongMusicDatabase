@@ -9,7 +9,7 @@ from typing import List
 from tqdm import tqdm
 
 from database import MusicDatabase, Folksong
-from musical_things import MusicNote
+from musical_things import MusicNote, chord_seq_to_str
 
 
 def read_args() -> Namespace:
@@ -24,16 +24,9 @@ def read_args() -> Namespace:
         help='The file path for outputed pickle file'
     )
     parser.add_argument(
-        '--window-size',
-        type=str,
-        choices=['bar', 'beat'],
-        default='bar'
-    )
-    parser.add_argument(
-        '--window-step-unit',
-        type=str,
-        choices=['bar', 'beat'],
-        default='bar'
+        '--old',
+        dest='old_chord_detection',
+        action='store_true'
     )
     parser.add_argument(
         '-a',
@@ -49,6 +42,11 @@ def read_args() -> Namespace:
         '-t',
         type=float,
         default=12.0
+    )
+    parser.add_argument(
+        '-v',
+        dest='verbose',
+        action='store_true'
     )
     parser.add_argument(
         '--dump-pattree-json',
@@ -87,12 +85,18 @@ def main():
 
     md = MusicDatabase(
         folksong_list,
-        cd_window_size=args.window_size,
-        cd_window_step_unit=args.window_step_unit,
+        old_chord_detection=args.old_chord_detection,
         alpha=args.a,
         beta=args.b,
         tau=args.t
     )
+    print('PAT-tree number of nodes:', len(md.pat_tree))
+    if args.verbose:
+        for k, f in md.folksongs.items():
+            print('-'*8)
+            print(f)
+            print('Music key:', md.folksong_music_key[k])
+            print('Chord sequence:', chord_seq_to_str(md.folksong_chrod_seq[k], is_old=args.old_chord_detection))
     pickle.dump(md, open(args.output_file_path, 'wb+'), protocol=pickle.HIGHEST_PROTOCOL)
 
     # dump json of PAT-tree

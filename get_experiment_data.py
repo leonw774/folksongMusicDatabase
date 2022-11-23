@@ -110,15 +110,18 @@ def corrupt_note_seq(
 def main():
     args = read_args()
     md: MusicDatabase = pickle.load(open(args.dataset_path, 'rb'))
-    print(md.alpha, md.beta, md.tau)
+    if md.old_chord_detection:
+        print('use original chord detection')
+    else:
+        print(md.alpha, md.beta, md.tau)
     if args.test_number > 0:
         rand_folksongs = random.choices(list(md.folksongs.values()), k=args.test_number)
     else:
         rand_folksongs = list(md.folksongs.values())
 
-    original_hits = 0
+
     retrieval_precisions = []
-    note_seq_hits= []
+    note_seq_hits = []
     jianpu_hits = []
 
     for f in tqdm(rand_folksongs):
@@ -127,28 +130,32 @@ def main():
 
         abs_note_seq = denormalize_note_seq(note_seq, f.tonic)
         retrieved_folksongs = md.search_by_abs_note_seq(abs_note_seq, f.metre)
-        if f.key in retrieved_folksongs:
-            original_hits += 1
-            retrieval_precisions.append(1/len(retrieved_folksongs))
-        else:
-            retrieval_precisions.append(0)
+        assert f.key in retrieved_folksongs, 'Can not find complete melody!?'
+        retrieval_precisions.append(1/len(retrieved_folksongs))
 
-        corrupted_note_seq = corrupt_note_seq(
-            note_seq,
-            args.corrupt_number,
-            edition=(not args.no_edition),
-            deletion=(not args.no_deletion)
-        )
-        abs_corrupted_note_seq = denormalize_note_seq(corrupted_note_seq, f.tonic)
-        # print(
-        #     'corrupted chord_seq:',
-        #     chord_seq_to_str(
-        #         abs_note_seq_to_chrod_seq(abs_corrupted_note_seq, f.metre, md.cd_window_size, md.cd_window_step_unit)
-        #     )
-        # )
-        retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_note_seq, f.metre)
-        # print('# of retrieved_folksongs:', len(retrieved_folksongs))
-        note_seq_hits.append((1 if f.key in retrieved_folksongs else 0))
+        try_count = 0
+        while try_count < 100:
+            try:
+                corrupted_note_seq = corrupt_note_seq(
+                    note_seq,
+                    args.corrupt_number,
+                    edition=(not args.no_edition),
+                    deletion=(not args.no_deletion)
+                )
+                abs_corrupted_note_seq = denormalize_note_seq(corrupted_note_seq, f.tonic)
+                # print(
+                #     'corrupted chord_seq:',
+                #     chord_seq_to_str(
+                #         abs_note_seq_to_chrod_seq(abs_corrupted_note_seq, f.metre, md.cd_window_size, md.cd_window_step_unit)
+                #     )
+                # )
+                assert len(abs_corrupted_note_seq) > 0
+                retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_note_seq, f.metre)
+                # print('# of retrieved_folksongs:', len(retrieved_folksongs))
+                note_seq_hits.append((1 if f.key in retrieved_folksongs else 0))
+                break
+            except (ValueError, AssertionError):
+                try_count += 1
 
         jianpu_str = f.melody_str
         # print(jianpu_str)
@@ -163,6 +170,7 @@ def main():
                 )
                 # print(corrupted_jianpu_str)
                 corrupted_jp_str_note_seq = jianpu_to_note_seq(corrupted_jianpu_str, f.time_unit, f.metre)
+                assert len(corrupted_jp_str_note_seq) > 0
                 abs_corrupted_jp_str_note_seq = denormalize_note_seq(corrupted_jp_str_note_seq, f.tonic)
                 retrieved_folksongs = md.search_by_abs_note_seq(abs_corrupted_jp_str_note_seq, f.metre)
                 jianpu_hits.append((1 if f.key in retrieved_folksongs else 0))
@@ -170,8 +178,7 @@ def main():
             except (ValueError, AssertionError):
                 try_count += 1
 
-    print('avg precision:', sum(retrieval_precisions) / len(retrieval_precisions))
-    print('no corruption hit rate:', original_hits / len(rand_folksongs))
+    print('average precision:', sum(retrieval_precisions) / len(retrieval_precisions))
     print('note_seq corruption hit rate:', sum(note_seq_hits) / len(note_seq_hits))
     print('jianpu corruption hit rate:', sum(jianpu_hits) / len(jianpu_hits))
 

@@ -43,7 +43,7 @@ def main():
         print('Ground truth key:', q_key)
         print('Ground truth record:', md.folksongs[q_key])
         print('Ground truth chrod_seq:', chord_seq_to_str(md.folksong_chrod_seq[q_key]))
-        print('Folksong_scale_type:', md.folksong_scale_type[q_key])
+        print('Folksong_scale_type:', md.folksong_music_key[q_key])
     else:
         raise NotImplementedError()
 

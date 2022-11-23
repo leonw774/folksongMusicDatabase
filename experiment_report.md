@@ -48,14 +48,15 @@ We implement a query method that support two different melody representation: Ji
 
 # Experiment
 
-## Effectiveness of Key-Chord Matching Score
+## Effect of Chord Detection Algorithm on Query Precision
 
-We use average precision to evaluate how often is more then one melody having the same detected chord sequence. The precision of a retrieval is the number of related items divided by number of retrieved items. In the indexing senario, the number of related item is always one. So for each retrieval, the precision is one over number of retrieved items.
+If a chord detection algorithm outputs the same chord sequence to many different melody, it could have better tolerence to user's input fault, but be bad at its primary task: indexing. To know which chord detection algorithm can give better search result, we use *average precision* to show how often is more then one melody having the same detected chord sequence. 
+
+The precision of a query result is the number of related items divided by number of retrieved items. In this indexing senario, the number of related item is always one. So for each query result, the precision is one over number of retrieved items. And the average precision is
 
 $$
-\frac{1}{N} \sum_{i=1}^N \frac{1}{\text{\# of retrieved items}} 
+\frac{1}{N} \sum_{i=1}^N \frac{1}{\text{\# of retrieved items when querying the i-th melody}} 
 $$
-
 
 
 ## Simulation of User Input Fault
@@ -67,4 +68,13 @@ $$
 ### Simulation of User Input Fault in Note-tuple Sequence Representation
 
 
+## Configuration
+
+We use four configurations of database: one with original chord detection algorithm, and three with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 1.0$. 
+
+
+
 ## Result
+
+### Result of Query Precision
+

@@ -1,25 +1,27 @@
 from math import exp
 from typing import List
 
-from musical_things import MusicNote, Chord, MusicKey, Metre, chord_to_str
+from musical_things import MusicNote, Chord, MusicKey, Metre, OLD_CHORD_NOTES
 
 # Chord weights
-CHORD_MAJOR_W       = [10, -5, -2, -5, 8, -2, -1, 8, -2, -5, -1, -2]
+CHORD_SINGLE_W      = [10, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5]
+CHORD_MAJOR_W       = [10, -5, -2, -5, 8, -1, -2, 8, -5, -2, -1, -2]
 CHORD_MINOR_W       = [10, -5, -2, 8, -5, -1, -2, 8, -5, -2, -1, -2]
 CHORD_AUGMENTED_W   = [8, -4, -2, -4, 8, -4, -2, -4, 8, -4, -2, -4]
 CHORD_DIMINISH_W    = [8, -4, -4, 8, -4, -4, 8, -4, -4, 0, -4, -4]
 
 CHORD_WEIGHTS = [
+    CHORD_SINGLE_W,
     CHORD_MAJOR_W,
     CHORD_MINOR_W,
     CHORD_AUGMENTED_W,
     CHORD_DIMINISH_W
 ]
 
-SCALE_MAJOR_W           = [10, -10, 10, -10, 10, 10, -8, 10, -10, 10, -8, 10]
-SCALE_NATURAL_MINOR_W   = [10, -10, 10, 10, -10, 10, -8, 10, 10, -10, 10, -8]
-SCALE_HARMONIC_MINOR_W  = [10, -10, 10, 10, -10, 10, -10, 10, 10, -10, -8, 10]
-SCALE_MELODIC_MINOR_W   = [10, -10, 10, 10, -10, 10, -10, 10, 0, 2, 0, 2]
+SCALE_MAJOR_W           = [10, -10, 10, -10, 10, 10, -8, 10, -10, 10, -10, 10]
+SCALE_NATURAL_MINOR_W   = [10, -10, 10, 10, -10, 10, -8, 10, 10, -10, 10, -10]
+SCALE_HARMONIC_MINOR_W  = [10, -10, 10, 10, -10, 10, -10, 10, 10, -10, -10, 10]
+SCALE_MELODIC_MINOR_W   = [10, -10, 10, 10, -10, 10, -10, 10, 2, 2, 2, 2]
 
 SCALE_WEIGHTS = [
     SCALE_MAJOR_W,
@@ -30,6 +32,7 @@ SCALE_WEIGHTS = [
 
 NEG_MAX = float('-inf')
 
+
 def argmax(x):
     return max(range(len(x)), key=lambda i: x[i])
 
@@ -38,14 +41,6 @@ def softmax(x, temperature=1.0):
     e_x = list(map(exp, x))
     sum_e_x = sum(e_x)
     return [i / sum_e_x for i in e_x]
-
-def quartile_three(x):
-    s = sorted(x)
-    k = 3 * len(s) // 4
-    if len(s) % 4 < 2:
-        return (s[k-1] + s[k]) / 2
-    else:
-        return s[k-1]
 
 def mean(x):
     return sum(x) / len(x)
@@ -60,22 +55,6 @@ def denormalize_note_seq(note_seq: List[MusicNote], tonic: int):
     return normalized_note_seq
 
 
-def normalized_note_seq_to_scale_type(normalized_note_seq: List[MusicNote]) -> int:
-    full_seq_profile = [0] * 12
-    for n in normalized_note_seq:
-        note_duration = n.end - n.start
-        pitch_class = n.pitch
-        if pitch_class < 0:
-            pitch_class += (pitch_class // 12) * 12
-        pitch_class = pitch_class % 12
-        full_seq_profile[pitch_class] += note_duration
-    scale_scores = [
-        sum([a * b for a, b in zip(full_seq_profile, SCALE_WEIGHTS[scale_type])])
-        for scale_type in range(3)
-    ]
-    return argmax(scale_scores)
-
-
 def abs_note_seq_to_music_key(note_seq: List[MusicNote]) -> MusicKey:
     profile = [0] * 12
     for n in note_seq:
@@ -85,7 +64,7 @@ def abs_note_seq_to_music_key(note_seq: List[MusicNote]) -> MusicKey:
             pitch_class += (pitch_class // 12) * 12
         pitch_class = pitch_class % 12
         profile[pitch_class] += note_duration
-    key_score = [0] * 12
+    key_score = []
     for scale_type in range(3):
         w = SCALE_WEIGHTS[scale_type]
         for tonic in range(12):
@@ -93,6 +72,7 @@ def abs_note_seq_to_music_key(note_seq: List[MusicNote]) -> MusicKey:
             key_score.append(
                 sum([a * b for a, b in zip(profile, _w)])
             )
+    # print(key_score)
     best_key_index = argmax(key_score)
     best_scale_type, best_tonic = best_key_index//12, best_key_index%12
     best_key = MusicKey(best_scale_type, best_tonic)
@@ -102,8 +82,6 @@ def abs_note_seq_to_music_key(note_seq: List[MusicNote]) -> MusicKey:
 def abs_note_seq_to_chrod_seq(
         abs_note_seq: List[MusicNote],
         metre: Metre,
-        window_size: str,
-        window_step_unit: str,
         alpha: float = 0.3,
         beta: float = 1.0,
         tau: float = 12) -> List[Chord]:
@@ -118,16 +96,16 @@ def abs_note_seq_to_chrod_seq(
         tau is the temperature of to use at softmaxing chord_scale_prob.
         we choose to use higher temperature to prevent one chord get all the probability
     """
-
+    assert len(abs_note_seq) > 0, 'Empty abs_note_seq'
     assert len(metre) == 2, 'metre is not 2-tuple'
-    assert window_size in ('bar', 'beat'), 'window_size should be \'bar\' or \'beat\''
-    assert window_step_unit in ('bar', 'beat'), 'window_step should be \'bar\' or \'beat\''
 
     detected_scale_type, detected_tonic = abs_note_seq_to_music_key(abs_note_seq)
+    # print('detected_scale_type', detected_scale_type)
+    # print('detected_tonic', detected_tonic)
 
     scale_weight = SCALE_WEIGHTS[detected_scale_type]
     chord_scale_scores = []
-    for chord_type in range(4):
+    for chord_type in range(5):
         w = CHORD_WEIGHTS[chord_type]
         for root in range(12):
             _w = w[-root:] + w[:-root]
@@ -135,7 +113,7 @@ def abs_note_seq_to_chrod_seq(
                 sum([a * b for a, b in zip(scale_weight, _w)])
             )
 
-    # get top k possible normalized_chord
+    # get top half/quater possible normalized_chord
     # k = quartile_three(chord_scale_scores)
     k = mean(chord_scale_scores)
     chord_scale_scores = [
@@ -150,10 +128,10 @@ def abs_note_seq_to_chrod_seq(
     #     for cid, csp, in zip(range(48), chord_scale_prob)
     # ]))
 
-    # find chord
+    # find chord for each bar
     window_start = 0
-    window_end = 4 // metre[1] if window_size == 'beat' else metre[0] * 4 // metre[1]
-    window_step = 4 // metre[1] if window_step_unit == 'beat' else metre[0] * 4 // metre[1]
+    window_end = metre[0] * 4 // metre[1]
+    window_step = window_end
 
     note_seq_end = max(n.end for n in abs_note_seq)
 
@@ -182,7 +160,7 @@ def abs_note_seq_to_chrod_seq(
                 continue
 
             chord_window_score = []
-            for chord_type in range(4):
+            for chord_type in range(5):
                 w = CHORD_WEIGHTS[chord_type]
                 for root in range(12):
                     _w = w[-root:] + w[:-root]
@@ -193,7 +171,7 @@ def abs_note_seq_to_chrod_seq(
             # print('---\n', window_start, '\n', chord_window_prob)
             chord_window_scale_prob = [
                 (csp ** alpha) * (cwp ** beta)
-                for cwp, csp in zip(chord_window_prob, chord_scale_prob)
+                for csp, cwp in zip(chord_scale_prob, chord_window_prob)
             ]
             best_chord_index = argmax(chord_window_scale_prob)
             best_chord_type, best_root = best_chord_index//12, best_chord_index%12
@@ -211,12 +189,17 @@ def abs_note_seq_to_chrod_seq(
 
     return chord_seq
 
+
+def normalized_note_seq_to_music_key(normalized_note_seq: List[MusicNote], tonic: int) -> MusicKey:
+    assert 0 <= tonic < 12
+    abs_note_seq = denormalize_note_seq(normalized_note_seq, tonic)
+    return abs_note_seq_to_music_key(abs_note_seq)
+
+
 def normalized_note_seq_to_chrod_seq(
         normalized_note_seq: List[MusicNote],
         tonic: int,
         metre: Metre,
-        window_size: str,
-        window_step_unit: str,
         alpha: float = 0.3,
         beta: float = 1.0,
         tau: float = 12) -> List[Chord]:
@@ -227,17 +210,131 @@ def normalized_note_seq_to_chrod_seq(
 
     assert len(metre) == 2, 'metre is not 2-tuple'
     assert 0 <= tonic < 12
-    assert window_size in ('bar', 'beat'), 'window_size should be \'bar\' or \'beat\''
-    assert window_step_unit in ('bar', 'beat'), 'window_step should be \'bar\' or \'beat\''
 
     abs_note_seq = denormalize_note_seq(normalized_note_seq, tonic)
-    chord_list = abs_note_seq_to_chrod_seq(
-        abs_note_seq,
-        metre,
-        window_size,
-        window_step_unit,
-        alpha,
-        beta,
-        tau
-    )
+    chord_list = abs_note_seq_to_chrod_seq(abs_note_seq, metre, alpha, beta, tau)
     return chord_list
+
+
+def old_abs_note_seq_to_chrod_seq(abs_note_seq: List[MusicNote], metre: Metre):
+
+    detected_scale_type, detected_tonic = abs_note_seq_to_music_key(abs_note_seq)
+    if detected_scale_type > 0:
+        detected_tonic += 3
+        if detected_tonic > 12:
+            detected_tonic -= 12
+
+    tonal_norm_note_seq = [
+        MusicNote(n.start, n.end, n.pitch-detected_tonic)
+        for n in abs_note_seq
+    ]
+
+    window_step = metre[0] * 4 // metre[1]
+    window_start = -window_step
+    window_end = 0
+
+    note_seq_end = max(n.end for n in abs_note_seq)
+
+    chord_seq: List[Chord] = []
+
+    while window_start < note_seq_end:
+        window_start += window_step
+        window_end += window_step
+
+        overlapped_notes = [
+            n
+            for n in tonal_norm_note_seq
+            if n.start < window_end and n.end > window_start
+        ]
+        candidate_list = [(a, b) for a in range(4) for b in range(12)]
+
+        if len(overlapped_notes) > 0:
+            profile = [0] * 12
+            for n in overlapped_notes:
+                note_overlap_duration = min(n.end, window_end) - max(n.start, window_start)
+                pitch_class = n.pitch
+                if pitch_class < 0:
+                    pitch_class += (pitch_class // 12) * 12
+                pitch_class = pitch_class % 12
+                profile[pitch_class] += note_overlap_duration
+
+            # step 1
+            for _ in range(12):
+                temp_profile = profile.copy()
+                max_freq_note = argmax(profile)
+                new_candidate_list = []
+                for c in candidate_list:
+                    if max_freq_note in OLD_CHORD_NOTES[c[0]][c[1]]:
+                        new_candidate_list.append(c)
+                if len(new_candidate_list) > 0:
+                    candidate_list = new_candidate_list
+                temp_profile[max_freq_note] = 0
+
+            if len(candidate_list) == 1:
+                chord_seq.append(Chord(candidate_list[0][0], candidate_list[0][1]))
+                continue
+
+            # step 2
+            # Preserve the minimal-length chords in the candidate_list
+            min_chord_type = min(c[0] for c in candidate_list)
+            candidate_list = [c for c in candidate_list if c[0] == min_chord_type]
+
+            if len(candidate_list) == 1:
+                chord_seq.append(Chord(candidate_list[0][0], candidate_list[0][1]))
+                continue
+
+            # step 3
+            # Preserve the chords in the candidate_list, whose roots have the maximal occurrence frequency
+            candidate_roots = set([c[1] for c in candidate_list])
+            temp_profile = [
+                p if i in candidate_roots else 0
+                for i, p in enumerate(profile)
+            ]
+            max_freq_root = argmax(temp_profile)
+            candidate_list = [c for c in candidate_list if c[1] == max_freq_root]
+
+            if len(candidate_list) == 1:
+                chord_seq.append(Chord(candidate_list[0][0], candidate_list[0][1]))
+                continue
+
+            # step 4
+            # Preserve the chords in the candidate_list, whose fifths have the maximal occurrence frequency
+            candidate_fifths = set([(c[1]+7)%12 for c in candidate_list])
+            temp_profile = [
+                p if i in candidate_fifths else 0
+                for i, p in enumerate(profile)
+            ]
+            max_freq_fifth = argmax(temp_profile)
+            candidate_list = [c for c in candidate_list if (c[1]+7)%12 == max_freq_fifth]
+
+            if len(candidate_list) == 1:
+                chord_seq.append(Chord(candidate_list[0][0], candidate_list[0][1]))
+                continue
+
+            # step 5
+            # Preserve the chords in the candidate_list, whose thirds have the maximal occurrence frequency
+            candidate_thirds = set([
+                OLD_CHORD_NOTES[c[0]][c[1]][1]
+                for c in candidate_list
+                if len(OLD_CHORD_NOTES[c[0]][c[1]]) > 1
+            ])
+            temp_profile = [
+                p if i in candidate_thirds else 0
+                for i, p in enumerate(profile)
+            ]
+            max_freq_third = argmax(temp_profile)
+            candidate_list = [c for c in candidate_list if (c[1]+7)%12 == max_freq_third]
+
+            if len(candidate_list) == 1:
+                chord_seq.append(Chord(candidate_list[0][0], candidate_list[0][1]))
+            else:
+                # step 6
+                # Choose the first entry in the candidate_list as the final result
+                chord_seq.append(Chord(candidate_list[0][0], candidate_list[0][1]))
+    # end while
+    return chord_seq
+
+def old_normalized_note_seq_to_chrod_seq(normalized_note_seq: List[MusicNote], tonic: int, metre: Metre):
+    assert 0 <= tonic < 12
+    abs_note_seq = denormalize_note_seq(normalized_note_seq, tonic)
+    return old_abs_note_seq_to_chrod_seq(abs_note_seq, metre)

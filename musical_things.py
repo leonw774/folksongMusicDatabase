@@ -37,6 +37,8 @@ Metre = Tuple[int, int]
 Chord = namedtuple('Chord', ['chord_type', 'root'])
 
 CHORD_NOTATION = [
+    # single
+    ['C1', 'C#/Db1', 'D1', 'D#/Eb1', 'E1', 'F1', 'F#/Gb1', 'G1', 'G#/Ab1', 'A1', 'A#/Bb1', 'B1'],
     # major
     ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
     # minor
@@ -47,11 +49,35 @@ CHORD_NOTATION = [
     ['Co', 'C#o/Dbo', 'Do', 'D#o/Ebo', 'Eo', 'Fo', 'F#o/Gbo', 'Go', 'G#o/Abo', 'Ao', 'A#o/Bbo', 'Bo']
 ]
 
-def chord_to_str(c: Chord) -> str:
-    return CHORD_NOTATION[c[0]][c[1]]
 
-def chord_seq_to_str(cs: Sequence[Chord]) -> str:
-    return ','.join([CHORD_NOTATION[c[0]][c[1]] for c in cs])
+OLD_CHORD_NOTES = [
+    [[0], [], [2], [], [4], [5], [], [7], [], [9], [], [11]],
+    [[0, 4], [], [2, 5], [], [4, 7], [5, 9], [], [7, 11], [], [9, 0], [], [11, 2]],
+    [[0, 4, 7], [], [2, 5, 8], [], [4, 7, 11], [5, 9, 0], [], [7, 11, 2], [], [9, 0, 4], [], [11, 2, 5]],
+    [[0, 4, 7, 11], [], [2, 5, 8, 0], [], [4, 7, 11, 2], [5, 9, 0, 4], [], [7, 11, 2, 5], [], [9, 0, 4, 7], [], [11, 2, 5, 9]],
+]
+
+OLD_CHORD_NOTATION = [
+    # single
+    ['C1', 'X', 'D1', 'X', 'E1', 'F1', 'X', 'G1', 'X', 'A1', 'X', 'B1'],
+    # third
+    ['C2', 'X', 'D2', 'X', 'E2', 'F2', 'X', 'G2', 'X', 'A2', 'X', 'B2'],
+    # triad
+    ['C', 'X', 'Dm', 'X', 'Em', 'F', 'X', 'G', 'X', 'Am', 'X', 'Bo'],
+    # seventh
+    ['CM7', 'X', 'Dm7', 'X', 'Em7', 'F7', 'X', 'G7', 'X', 'Am7', 'X', 'Bo-7']
+]
+
+
+def chord_to_str(c: Chord, is_old=False) -> str:
+    return OLD_CHORD_NOTATION[c[0]][c[1]] if is_old else CHORD_NOTATION[c[0]][c[1]]
+
+def chord_seq_to_str(cs: Sequence[Chord], is_old=False) -> str:
+    return (
+        ','.join([OLD_CHORD_NOTATION[c[0]][c[1]] for c in cs])
+        if is_old else
+        ','.join([CHORD_NOTATION[c[0]][c[1]] for c in cs])
+    )
 
 MusicKey = namedtuple('MusicKey', ['scale_type', 'tonic'])
 

@@ -105,8 +105,10 @@ def jianpu_to_note_seq(melody_str: str, time_unit: int, metre: Metre) -> List[Mu
             octave = 0
             assert len(note_seq) > 0 or is_rest, 'No note before suffix'
             if c == '#':
+                assert len(note_seq) > 0
                 note_seq[-1].pitch += 1
             elif c == 'b':
+                assert len(note_seq) > 0
                 note_seq[-1].pitch -= 1
             elif c == '_':
                 cur_time += duration
