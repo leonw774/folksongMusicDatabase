@@ -4,7 +4,7 @@ from typing import List
 from musical_things import MusicNote, Chord, MusicKey, Metre
 
 # Chord weights
-SINGLE_NOTE_W = [24, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4]
+SINGLE_NOTE_W = [25, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4]
 MAJOR_THIRD_W = [13, -4, -4, -4, 12, -4, -4, -4, -4, -4, -4, -4]
 MINOR_THIRD_W = [13, -4, -4, 12, -4, -4, -4, -4, -4, -4, -4, -4]
 MAJOR_TRIAD_W = [9, -4, -4, -4, 8, -4, -4, 9, -4, -4, -4, -4]
@@ -60,6 +60,14 @@ def softmax(x, temperature=1.0):
     e_x = list(map(exp, x))
     sum_e_x = sum(e_x)
     return [i / sum_e_x for i in e_x]
+
+def quartile_three(x):
+    t = sorted(x)
+    k = 3 * len(t) // 4
+    if len(t) % 4 <  2:
+        return (t[k] + t[k+1])/2
+    else:
+        return t[k]
 
 def mean(x):
     return sum(x) / len(x)
@@ -131,8 +139,7 @@ def abs_note_seq_to_chrod_seq(
                 sum([a * b for a, b in zip(scale_weight, _w)])
             )
 
-    # get top half/quater possible normalized_chord
-    # k = quartile_three(chord_scale_scores)
+    # get top half possible normalized_chord: that is 12 in 48
     k = mean(chord_scale_scores)
     chord_scale_scores = [
         i - k if i > k else NEG_MAX
