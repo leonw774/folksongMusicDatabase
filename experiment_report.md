@@ -1,27 +1,62 @@
 # Chord Representation Model
 
+The chord representation model proposed by Chou et al. has of two main components: a chord detection algorithm to transform monophonic music data into chord sequences, and a PAT-tree for indexing the detected chord sequences.
+
+A monophonic melody $X$ can be represented in a time-ordered sequence of music notes $x_1, x_2, \ldots, x_N$. Each music note $x_i$ has three foundamantal attributes: onset time, pitch and duration. We can represent a music note $x_i$ as a three-value tuple $(onset_i, pitch_i, duration_i)$.
+
+In chord-representation model, melody $X$ is partition into subsequences $X'_1, \ldots, X'_M$ based on the bar and metre information provided by users. A chord detection algorithm $g$ maps note sequence to a pre-determined collection of chord representations $C$. For a subsequence $X'_j$, its chord representation is $c_j = g(X'_j), c_j \in C$ Perform the algorithm to each of the subsequences, eventually, we will get a sequence of chord representations $c_1, \ldots, c_M$.
+
 ## Pitch Class Profile
 
-A pitch class profile (PCP) of a span of music is a vector that encode the occurence fequency of the 12 pitch classes in the span. A pitch class profile $p = (f_1, f_2, \ldots, f_{12})$ where $f_i$ is the occurence frequency of pitch class $i$.
+A pitch class profile (PCP) of a span of music is a vector that encode the occurence fequency of the 12 pitch classes in the span. A pitch class profile $p = (f_1, f_2, \ldots, f_{12})$ where $f_i$ is the occurence frequency of pitch class $i$. For example, a subsequence consist of four notes ((0, A2, 12), (12, G2, 24), (24, A1, 36), (36, C2, 48)) will have PCP (1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0).
 
 ## Original Chord Detection Algorithm
 
-The chord detection algorithm in the original paper are rootes on six pitches (C, D, E, F, G, A) and four types of "chord":
+A chord is a musical unit consisting of at least three different pitches. Sometimes, the parititioned subsequences of the melody does not compose of at least three different notes. So the chord detection algorithm have detect the case of two-note interval and single note as well.
+
+The chord detection algorithm in the original paper select 24 chords in their chord representation collect, which are the combination of four common cases with six root pitches (C, D, E, F, G, A). The four cases are:
 
 - Single
 - Third
 - Triad
 - Seventh
 
-The algorithm first collect the pitch profile in each bar, and uses five principles compare the pitch profile and a chord candidate to progressively eliminate candidate chords until only one candidate left.
+
+The songs are first "normalized" into tonic of C. Then the algorithm will devide the melody into bars, and collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
 
 ## New Chord Detection Algorithm
 
-The new chord detection algorithm we are using in this project is based on Fujishima's (1999) PCP matching method that find the best chord of a PCP by the maximum matching score. The matching score between PCP $p$ and a given chord $C$ is computed by doing inner product between the $p$ and the hand-crafted weight of the chord $W_C$
+We designed a template-matching based algorithm (Fujishima, 1999) to replace the original algorithm. To be comparable to the original algorithm, we also use 24 chords in the chord representation collection. Due to the nature of tonal system, the case of "interval of third", "triad chord", and "seventh chord" is corresponded to multiple templates. For example, an "interval of third" could actually be a major third or minor third, which are respectivly two notes being 4 semi-tone apart or 3 semi-tone apart. 
+
+The matching score between a PCP $p$ and a given chord $c$ is computed by doing inner product between the $p$ and the hand-crafted weight of the chord $W_c$
 
 $$
-\text{matching score}(p, C) = \sum_{i=1}^{12} f_i \times {W_C}_i
+\text{score}(W_c, p) = \sum_{i=1}^{12} {W_c}[i] \times p[i]
 $$
+
+In order to achieve better detection result, we try to incorporate music key information into detection process. The music information contain two element: *scale* and *tonic*. Because we "normalize" the songs to tonic of C, the tonic is not important. We use four scales: major, natural minor, harmonic minor, melodic minor, each has its hand-crafted weight of the scale $W_{\text{maj}}, W_{\text{natural\_min}}, W_{\text{harmonic\_min}}, W_{\text{melodic\_min}}$.
+
+We use the PCP of full song to compute the matching score of each weight of scale just like we do between PCP and weight of chord, and select the scale with maximum score as the detected scale of this song. We compute the matching scores between each chord $c$ in chords set $C$ and the detected scale $s$ and use the scores to compute the probabilistoc distribution of chords to scale by softmax function.
+
+$$
+P(c | s) = \frac{\exp(\text{score}(W_{c}, W_s)^{\tau})}{\sum_{c' \in C} \exp(\text{score}(W_{c'}, W_s)^{\tau})}
+$$
+
+We can call the $P(c | s)$ *scale score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution so that the algorithm don't favor one chord over all the others, we choose $\tau = 8.0$ in implementation.
+
+We will also compute the *bar score*: the probability of each chord $c$ conditioned by the PCP of a bar $p$
+
+$$
+P(c | p) = \frac{\exp(\text{score}(W_{c}, p)^{\tau})}{\sum_{c' \in C} \exp(\text{score}(W_{c'}, p)^{\tau})}
+$$
+
+Finally we get the final score of a chord $c$ to the PCP of a bar $p$ by
+
+$$
+\text{final\_score}(c, p) = P(c | s)^\alpha P(c | p)
+$$
+
+The parameter $\alpha$ controls how much $P(c | s)$, the scale score, effects the final score.
 
 ## PAT-Tree
 
@@ -89,11 +124,18 @@ $$
 
 ## Configuration
 
-We use four configurations of database: one with original chord detection algorithm, and three with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 1.0$. 
-
-
+We use four configurations of database: one with original chord detection algorithm, and three with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 0.6 1.0$. 
 
 ## Result
 
 ### Result of Query Precision
 
+![](imgs/average_precision.png)
+
+### Result of User Input Fault in Jianpu Representation
+
+![](imgs/jianpu_corruption_hit_rate.png)
+
+### Result of User Input Fault in Note-tuple Sequence Representation
+
+![](imgs/note-tuple_corruption_hit_rate.png)
