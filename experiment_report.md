@@ -42,7 +42,7 @@ $$
 P(c | s) = \frac{\exp(\text{score}(W_{c}, W_s)^{\tau})}{\sum_{c' \in C} \exp(\text{score}(W_{c'}, W_s)^{\tau})}
 $$
 
-We can call the $P(c | s)$ *scale score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution so that the algorithm don't favor one chord over all the others, we choose $\tau = 8.0$ in implementation.
+We can call the $P(c | s)$ *scale score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution we use $\tau = 8.0$ in implementation, so that the algorithm won't only choose the chord with highest score.
 
 We will also compute the *bar score*: the probability of each chord $c$ conditioned by the PCP of a bar $p$
 
@@ -94,7 +94,7 @@ The key attrbiutes of the folksong table is {Title, Signature}. We pre-process t
 
 ## Implementation of Chord Detection Algorithm
 
-To implement the chord detection algorithm, we define a function `NoteSeqToChordSeq` that takes a pitch-normalized note sequence $\bar{x} = \bar{x}_1, \ldots \bar{x}_n$, tonic value $t$ and metre $m$, and outputs detected chord sequence $c = c_1, \ldots, c_m$. The pitch values in $\bar{x}$ will be de-normalized to obtain the original melody $x$. And the moving window size and moving window step will be all set to the length of one bar.  
+To implement the chord detection algorithm, we define a function `NoteSeqToChordSeq` that takes a pitch-normalized note sequence $\bar{x} = \bar{x}_1, \ldots \bar{x}_n$, tonic value $t$ and metre $m$, and outputs detected chord sequence $c = c_1, \ldots, c_m$. The pitch values in $\bar{x}$ will be de-normalized to obtain the original melody $x$.
 
 ## Content-Query Method
 
