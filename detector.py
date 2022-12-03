@@ -139,7 +139,7 @@ def abs_note_seq_to_chrod_seq(
                 sum([a * b for a, b in zip(scale_weight, _w)])
             )
 
-    # get top half possible normalized_chord: that is 12 in 48
+    # get top half possible normalized_chord: that is 24 in 48
     k = mean(chord_scale_scores)
     chord_scale_scores = [
         i - k if i > k else NEG_MAX

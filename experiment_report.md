@@ -22,7 +22,7 @@ The chord detection algorithm in the original paper select 24 chords in their ch
 - Seventh
 
 
-The songs are first "normalized" into tonic of C. Then the algorithm will devide the melody into bars, and collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
+The algorithm will first devide the melody into bars, and then collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
 
 ## New Chord Detection Algorithm
 
@@ -34,12 +34,12 @@ $$
 \text{score}(W_c, p) = \sum_{i=1}^{12} {W_c}[i] \times p[i]
 $$
 
-In order to achieve better detection result, we try to incorporate music key information into detection process. The music information contain two element: *scale* and *tonic*. Because we "normalize" the songs to tonic of C, the tonic is not important. We use four scales: major, natural minor, harmonic minor, melodic minor, each has its hand-crafted weight of the scale $W_{\text{Major}}, W_{\text{NaturalMinor}}, W_{\text{HarmonicMinor}}, W_{\text{MelodicMinor}}$.
+In order to achieve better detection result, we try to incorporate music key information into detection process. The music information contain two element: *scale* and *tonic*. We use four scales: major, natural minor, harmonic minor, melodic minor, and all 12 pitches as tonics. The hand-crafted weight of the music key with scale $s$ and tonic $t$ is denoted as $W_{s, t}$.
 
 We use the PCP of full song to compute the matching score of each weight of scale just like we do between PCP and weight of chord, and select the scale with maximum score as the detected scale of this song. We compute the matching scores between each chord $c$ in chords set $C$ and the detected scale $s$ and use the scores to compute the probabilistoc distribution of chords to scale by softmax function.
 
 $$
-P(c | s) = \frac{\exp(\text{score}(W_{c}, W_s)^{\tau})}{\sum_{c' \in C} \exp(\text{score}(W_{c'}, W_s)^{\tau})}
+P(c | s, t) = \frac{e^{\text{score}(W_{c}, W_{s, t}) / \tau}}{\sum_{c' \in C} e^{\text{score}(W_{c'}, W_{s, t}) / \tau}}
 $$
 
 We can call the $P(c | s)$ *scale score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution we use $\tau = 8.0$ in implementation, so that the algorithm won't only choose the chord with highest score.
@@ -47,7 +47,7 @@ We can call the $P(c | s)$ *scale score*. The $\tau$ in the equation is the "tem
 We will also compute the *bar score*: the probability of each chord $c$ conditioned by the PCP of a bar $p$
 
 $$
-P(c | p) = \frac{\exp(\text{score}(W_{c}, p)^{\tau})}{\sum_{c' \in C} \exp(\text{score}(W_{c'}, p)^{\tau})}
+P(c | p) = \frac{e^{\text{score}(W_{c}, p) / \tau}}{\sum_{c' \in C} e^{\text{score}(W_{c'}, p) / \tau}}
 $$
 
 Finally we get the final score of a chord $c$ to the PCP of a bar $p$ by
