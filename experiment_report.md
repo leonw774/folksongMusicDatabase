@@ -22,7 +22,7 @@ The chord detection algorithm in the original paper select 24 chords in their ch
 - Seventh
 
 
-The algorithm will first devide the melody into bars, and then collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
+The songs are first "normalized" into tonic of C. Then the algorithm will devide the melody into bars, and collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
 
 ## New Chord Detection Algorithm
 
@@ -34,15 +34,15 @@ $$
 \text{score}(W_c, p) = \sum_{i=1}^{12} {W_c}[i] \times p[i]
 $$
 
-In order to achieve better detection result, we try to incorporate music key information into detection process. The music information contain two element: *scale* and *tonic*. We use four scales: major, natural minor, harmonic minor, melodic minor, and all 12 pitches as tonics. The hand-crafted weight of the music key with scale $s$ and tonic $t$ is denoted as $W_{s, t}$.
+In order to achieve better detection result, we try to incorporate music key information into detection process. The music key information contain two element: *scale* and *tonic*. We use four scales: major, natural minor, harmonic minor, melodic minor, and all 12 pitches as tonics. The hand-crafted weight of the music key with scale $s$ and tonic $t$ is denoted as $W_{s,t}$.
 
 We use the PCP of full song to compute the matching score of each weight of scale just like we do between PCP and weight of chord, and select the scale with maximum score as the detected scale of this song. We compute the matching scores between each chord $c$ in chords set $C$ and the detected scale $s$ and use the scores to compute the probabilistoc distribution of chords to scale by softmax function.
 
 $$
-P(c | s, t) = \frac{e^{\text{score}(W_{c}, W_{s, t}) / \tau}}{\sum_{c' \in C} e^{\text{score}(W_{c'}, W_{s, t}) / \tau}}
+P(c|s,t) = \frac{e^{\text{score}(W_{c}, W_{s,t}) / \tau}}{\sum_{c' \in C} e^{\text{score}(W_{c'}, W_{s,t}) / \tau}}
 $$
 
-We can call the $P(c | s)$ *scale score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution we use $\tau = 8.0$ in implementation, so that the algorithm won't only choose the chord with highest score.
+We can call the $P(c|s,t)$ *key score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution we use $\tau = 8.0$ in implementation, so that the algorithm won't only choose the chord with highest score.
 
 We will also compute the *bar score*: the probability of each chord $c$ conditioned by the PCP of a bar $p$
 
@@ -53,10 +53,10 @@ $$
 Finally we get the final score of a chord $c$ to the PCP of a bar $p$ by
 
 $$
-\text{finalScore}(c, p) = P(c | s)^\alpha P(c | p)
+\text{finalScore}(c, p) = P(c|s,t)^a P(c|p)
 $$
 
-The parameter $\alpha$ controls how much $P(c | s)$, the scale score, effects the final score.
+The parameter $a$ controls how much $P(c|s,t)$, the key score, effects the final score.
 
 # Implementation
 
@@ -89,9 +89,11 @@ For simplification, we only keep the necessary columns in ours implementation. T
 
 The key attrbiutes of the folksong table is {Title, Signature}. We pre-process the melody from Jianpu format into note-tuple format for computation convenience. We also create two other table for storing detected musical key and chord sequence of each folksong. 
 
-## Implementation of Chord Detection Algorithm
+## Implementation of Chord Detection Algorithms
 
-To implement the chord detection algorithm, we create a function that takes a pitch-normalized note sequence $\bar{x} = \bar{x}_1, \ldots \bar{x}_n$, tonic value $t$ and metre $m$, and outputs detected chord sequence $c = c_1, \ldots, c_m$. The pitch values in $\bar{x}$ will be de-normalized to obtain the original melody $x$.
+To implement the chord detection algorithms, we create a function that takes a pitch-normalized note sequence $\bar{x} = \bar{x}_1, \ldots \bar{x}_n$, tonic value $t$ and metre $m$, and outputs detected chord sequence $c = c_1, \ldots, c_m$.
+
+When the function is in the new algorithm mode, before executing the new algorithm, the pitch values in $\bar{x}$ will be de-normalized to obtain the original melody $x$. And when the function is in the original algorithm mode, before executing the original algorithm, to normalized the key to the tonic of C, we perform the key detection used in new chord detection algorithm to first know the key tonic of song, then shift the pitch of notes such the pitch of tonic notes become C.
 
 ## Content-Query Method
 
