@@ -2,7 +2,7 @@
 
 The chord representation model proposed by Chou et al. has of two main components: a chord detection algorithm to transform monophonic music data into chord sequences, and a PAT-tree for indexing the detected chord sequences.
 
-A monophonic melody $X$ can be represented in a time-ordered sequence of music notes $x_1, x_2, \ldots, x_N$. Each music note $x_i$ has three foundamantal attributes: onset time, pitch and duration. We can represent a music note $x_i$ as a three-value tuple $(onset_i, pitch_i, duration_i)$.
+A monophonic melody $X$ can be represented in a time-ordered sequence of music notes $x_1, x_2, \ldots, x_N$. Each music note $x_i$ has three foundamantal attributes: onset time, pitch and duration. We can represent a music note $x_i$ as a three-value tuple $(onset_i, pitch_i, duration_i)$, called *note-tuple format*.
 
 In chord-representation model, melody $X$ is partition into subsequences $X'_1, \ldots, X'_M$ based on the bar and metre information provided by users. A chord detection algorithm $g$ maps note sequence to a pre-determined collection of chord representations $C$. For a subsequence $X'_j$, its chord representation is $c_j = g(X'_j), c_j \in C$ Perform the algorithm to each of the subsequences, eventually, we will get a sequence of chord representations $c_1, \ldots, c_M$.
 
@@ -34,7 +34,7 @@ $$
 \text{score}(W_c, p) = \sum_{i=1}^{12} {W_c}[i] \times p[i]
 $$
 
-In order to achieve better detection result, we try to incorporate music key information into detection process. The music information contain two element: *scale* and *tonic*. Because we "normalize" the songs to tonic of C, the tonic is not important. We use four scales: major, natural minor, harmonic minor, melodic minor, each has its hand-crafted weight of the scale $W_{\text{maj}}, W_{\text{natural\_min}}, W_{\text{harmonic\_min}}, W_{\text{melodic\_min}}$.
+In order to achieve better detection result, we try to incorporate music key information into detection process. The music information contain two element: *scale* and *tonic*. Because we "normalize" the songs to tonic of C, the tonic is not important. We use four scales: major, natural minor, harmonic minor, melodic minor, each has its hand-crafted weight of the scale $W_{\text{Major}}, W_{\text{NaturalMinor}}, W_{\text{HarmonicMinor}}, W_{\text{MelodicMinor}}$.
 
 We use the PCP of full song to compute the matching score of each weight of scale just like we do between PCP and weight of chord, and select the scale with maximum score as the detected scale of this song. We compute the matching scores between each chord $c$ in chords set $C$ and the detected scale $s$ and use the scores to compute the probabilistoc distribution of chords to scale by softmax function.
 
@@ -53,13 +53,10 @@ $$
 Finally we get the final score of a chord $c$ to the PCP of a bar $p$ by
 
 $$
-\text{final\_score}(c, p) = P(c | s)^\alpha P(c | p)
+\text{finalScore}(c, p) = P(c | s)^\alpha P(c | p)
 $$
 
 The parameter $\alpha$ controls how much $P(c | s)$, the scale score, effects the final score.
-
-## PAT-Tree
-
 
 # Implementation
 
@@ -94,7 +91,7 @@ The key attrbiutes of the folksong table is {Title, Signature}. We pre-process t
 
 ## Implementation of Chord Detection Algorithm
 
-To implement the chord detection algorithm, we define a function `NoteSeqToChordSeq` that takes a pitch-normalized note sequence $\bar{x} = \bar{x}_1, \ldots \bar{x}_n$, tonic value $t$ and metre $m$, and outputs detected chord sequence $c = c_1, \ldots, c_m$. The pitch values in $\bar{x}$ will be de-normalized to obtain the original melody $x$.
+To implement the chord detection algorithm, we create a function that takes a pitch-normalized note sequence $\bar{x} = \bar{x}_1, \ldots \bar{x}_n$, tonic value $t$ and metre $m$, and outputs detected chord sequence $c = c_1, \ldots, c_m$. The pitch values in $\bar{x}$ will be de-normalized to obtain the original melody $x$.
 
 ## Content-Query Method
 
@@ -109,9 +106,10 @@ If a chord detection algorithm outputs the same chord sequence to many different
 The precision of a query result is the number of related items divided by number of retrieved items. In this indexing senario, the number of related item is always one. So for each query result, the precision is one over number of retrieved items. And the average precision is
 
 $$
-\frac{1}{N} \sum_{i=1}^N \frac{1}{\text{\# of retrieved items when querying the i-th melody}} 
+\frac{1}{N} \sum_{i=1}^N \frac{1}{|Q(i)|} 
 $$
 
+where $|Q(i)|$ is the number of retrieved songs when using the melody of the $i$-th song as the query, and $N$ is the number of songs in the database.
 
 ## Simulation of User Input Fault
 
