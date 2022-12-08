@@ -8,55 +8,61 @@ In chord-representation model, melody $X$ is partition into subsequences $X'_1, 
 
 ## Pitch Class Profile
 
-A pitch class profile (PCP) of a span of music is a vector that encode the occurrence frequency of the 12 pitch classes in the span. A pitch class profile $p = (f_1, f_2, \ldots, f_{12})$ where $f_i$ is the occurence frequency of pitch class $i$. For example, a subsequence consist of four notes (1, E0, 2), (2, G0, 3), (3, G-1, 4), (4, C0, 8) will have PCP (4, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0)
+A pitch class profile (PCP) of a span of music is a vector that encode the occurrence frequency of the 12 pitch classes in the span. A pitch class profile $p = (f_1, f_2, \ldots, f_{12})$ where $f_i$ is the occurence frequency of pitch class $i$. For example, a subsequence consist of four notes (1, E0, 1), (2, G0, 1), (3, G-1, 1), (4, C0, 4) will have PCP (4, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0)
 
 ## Original Chord Detection Algorithm
 
-A chord is a musical unit consisting of at least three different pitches. Sometimes, the parititioned subsequences of the melody does not compose of at least three different notes. So the chord detection algorithm have detect the case of two-note interval and single note as well.
+A chord is a musical unit consisting of at least three different pitches. Sometimes, the parititioned subsequences of the melody does not compose of at least three different notes. So the chord detection algorithm for monophonic melody have to detect the case of two-note interval and single note as well.
 
-The chord detection algorithm in the original paper select 24 chords in their chord representation collect, which are the combination of four common cases with six root pitches (C, D, E, F, G, A). The four cases are:
+The chord detection algorithm in the original paper select 24 chords in their chord representation collection, which are the combination of four common cases with six root pitches C, D, E, F, G, A. The four cases are:
 
 - Single
-- Third
+- Interval of third
 - Triad
 - Seventh
 
 
-The songs are first "normalized" into tonic of C. Then the algorithm will devide the melody into bars, and collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
+The songs are first "normalized" into tonic of C. Then the algorithm will divide the melody into bars, and collect the PCP in each bar. They designed five principles to compare the PCP to each of the 24 chord candidates, and progressively eliminate candidates until only one left.
 
 ## New Chord Detection Algorithm
 
-We designed a template-matching based algorithm (Fujishima, 1999) to replace the original algorithm. To be comparable to the original algorithm, we also use 24 chords in the chord representation collection. Due to the nature of tonal system, the case of "interval of third", "triad chord", and "seventh chord" is corresponded to multiple templates. For example, an "interval of third" could actually be a major third or minor third, which are respectivly two notes being 4 semi-tone apart or 3 semi-tone apart. 
+We designed a template-matching based algorithm (Fujishima, 1999) to replace the original algorithm. To be comparable to the original algorithm, we also use 24 chords in the chord representation collection. Due to the nature of tonal system, the case of "interval of third", "triad chord", and "seventh chord" is corresponded to multiple templates. For example, an "interval of third" could actually be a major third or minor third, which are respectively two notes being 4 semi-tone apart or 3 semi-tone apart. 
 
-The matching score between a PCP $p$ and a given chord $c$ is computed by doing inner product between the $p$ and the hand-crafted weight of the chord $W_c$
+The matching score between a PCP $p$ and a given chord $c$ is calculated as doing inner product between the $p$ and every hand-crafted template weight of the chord $W_{c,k}, k = 1 \ldots n_c$, and $n_c$ is the number of template the chord $c$ corresponded to.
 
 $$
-\text{score}(W_c, p) = \sum_{i=1}^{12} {W_c}[i] \times p[i]
+\text{score}(p, c) = \max_k \left(\sum_{i=1}^{12} {W_{c,k}}[i] \times p[i] \right)
 $$
 
 In order to achieve better detection result, we try to incorporate music key information into detection process. The music key information contain two element: *scale* and *tonic*. We use four scales: major, natural minor, harmonic minor, melodic minor, and all 12 pitches as tonics. The hand-crafted weight of the music key with scale $s$ and tonic $t$ is denoted as $W_{s,t}$.
 
-We use the PCP of full song to compute the matching score of each weight of scale just like we do between PCP and weight of chord, and select the scale with maximum score as the detected scale of this song. We compute the matching scores between each chord $c$ in chords set $C$ and the detected scale $s$ and use the scores to compute the probabilistoc distribution of chords to scale by softmax function.
+To detect the music key $\langle s, t \rangle$ of a melody, we use the PCP of full melody to compute the matching score of each weight of key just like we do between PCP and weight of chord, and select the key with maximum score as the detected key of this melody.
 
 $$
-P(c|s,t) = \frac{e^{\text{score}(W_{c}, W_{s,t}) / \tau}}{\sum_{c' \in C} e^{\text{score}(W_{c'}, W_{s,t}) / \tau}}
+s^*, t^* = argmax_{s,t} \left( score(\langle s, t \rangle, p_{full}) \right)
 $$
 
-We can call the $P(c|s,t)$ *key score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution we use $\tau = 8.0$ in implementation, so that the algorithm won't only choose the chord with highest score.
+We compute the matching scores between each chord $c$ in chords set $C$ and the detected key $\langle s^*,t^* \rangle$ and use the scores to compute the probabilistic distribution of chords to key with softmax function.
+
+$$
+P(c|\langle s^*,t^* \rangle) = \frac{e^{\text{score}(c, \langle s^*,t^* \rangle) / \tau}}{\sum_{c' \in C} e^{\text{score}(c', \langle s^*,t^* \rangle) / \tau}}
+$$
+
+We can call the $P(c|\langle s^*,t^* \rangle)$ *key score*. The $\tau$ in the equation is the "temperature" of the softmax function. To smooth the distribution we use $\tau = 8.0$ in implementation, so that the algorithm won't only choose the chord with highest score.
 
 We will also compute the *bar score*: the probability of each chord $c$ conditioned by the PCP of a bar $p$
 
 $$
-P(c | p) = \frac{e^{\text{score}(W_{c}, p) / \tau}}{\sum_{c' \in C} e^{\text{score}(W_{c'}, p) / \tau}}
+P(c | p) = \frac{e^{\text{score}(c, p) / \tau}}{\sum_{c' \in C} e^{\text{score}(c', p) / \tau}}
 $$
 
 Finally we get the final score of a chord $c$ to the PCP of a bar $p$ by
 
 $$
-\text{finalScore}(c, p) = P(c|s,t)^a P(c|p)
+\text{finalScore}(c, p) = P(c|\langle s^*,t^* \rangle)^a P(c|p)
 $$
 
-The parameter $a$ controls how much $P(c|s,t)$, the key score, effects the final score.
+The parameter $a$ controls how much $P(c|\langle s^*,t^* \rangle)$, the key score, effects the final score.
 
 # Implementation
 
@@ -103,7 +109,7 @@ We implement a query method that support two different melody representation: Ji
 
 ## Effect of Chord Detection Algorithm on Query Precision
 
-If a chord detection algorithm outputs the same chord sequence to many different melody, it could have better tolerence to user's input fault, but be bad at its primary task: indexing. To know which chord detection algorithm can give better search result, we use *average precision* to show how often is more then one melody having the same detected chord sequence. 
+If a chord detection algorithm outputs the same chord sequence to many different melody, it could have better tolerance to user's input fault, but be less efficient at its primary task: indexing. To know which chord detection algorithm can give better search result, we use *average precision* to show how often is more then one melody having the same detected chord sequence. 
 
 The precision of a query result is the number of related items divided by number of retrieved items. In this indexing senario, the number of related item is always one. So for each query result, the precision is one over number of retrieved items. And the average precision is
 
@@ -111,20 +117,36 @@ $$
 \frac{1}{N} \sum_{i=1}^N \frac{1}{|Q(i)|} 
 $$
 
-where $|Q(i)|$ is the number of retrieved songs when using the melody of the $i$-th song as the query, and $N$ is the number of songs in the database.
+where $|Q(i)|$ is the number of retrieved records when using the melody of the $i$-th song as the query, and $N$ is the number of songs in the database.
 
-## Simulation of User Input Fault
+## Simulation of User's Input Fault
 
+We simulate user's input fault by "corrupting" the original melody representation. We design two ways to "corrupt" a melody representation: *deletion* and *update*. Deletion is defined as randomly picking a component of the representation and removing it. While *update* is defined as randomly picking a component of the representation, and replacing it with a random component.
 
-### Simulation of User Input Fault in Jianpu Representation
+Each "corruption" has half the chance to be deletion and the other half to be *update*.
 
+### Simulation of User's Input Fault in Jianpu Format
 
-### Simulation of User Input Fault in Note-tuple Sequence Representation
+The basic component of Jianpu format is characters, so the deletion and update are define as:
+
+- Deletion: randomly pick a character and remove it
+- Update: randomly pick a character and replace it with a random character in Jianpu’s charater set
+
+If a corruption make the format invalid, then it is revoked and we try again until the format is valid and the new content is not the same as the original content.
+
+### Simulation of User's Input Fault in Note-tuple Sequence Format
+
+The basic component of note-tuple format is, of course, note-tuple, so the deletion and update are define as:
+
+- Deletion: randomly pick a note-tuple and remove it
+- Update: randomly pick a note-tuple and replace it's **pitch value** with a random value within one positive octave and one negative octave
+
+The reason we don’t update the onset and duration value of note-tuple is because it has very high possibility to be invalid if replacing it with random value.
 
 
 ## Configuration
 
-We use four configurations of database: one with original chord detection algorithm, and three with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 0.6 1.0$. 
+We use four configurations of database: one with original chord detection algorithm, and three with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 0.6, 1.0$.
 
 ## Result
 
