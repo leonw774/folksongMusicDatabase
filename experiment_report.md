@@ -146,7 +146,10 @@ The reason we don’t update the onset and duration value of note-tuple is becau
 
 ## Configuration
 
-We use four configurations of database: one with original chord detection algorithm, and three with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 0.6, 1.0$.
+We use five configurations of database: one with original chord detection algorithm, and four with our proposed algorithm with the key-chord score weight $\alpha$ being $0.0, 0.3, 0.6, 1.0$.
+
+For each database, we examine its average query precision and its tolerance to user’s input fault by doing 1~5 corruption to each of the melody in Jianpu and note-tuple format.
+
 
 ## Result
 
@@ -161,3 +164,9 @@ We use four configurations of database: one with original chord detection algori
 ### Result of User Input Fault in Note-tuple Sequence Representation
 
 ![](imgs/note-tuple_corruption_hit_rate.png)
+
+## Conclusion
+
+The new chord detection algorithm we designed has better query precision than the original one, but lower tolerance to input fault.
+
+We find that the query precision and the tolerance to input fault have negative relation.
