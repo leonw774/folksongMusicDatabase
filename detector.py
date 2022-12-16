@@ -35,11 +35,12 @@ SCALE_MELODIC_MINOR_W   = [10, -10, 10, 10, -10, 10, -10, 10, -3, 3, -3, 3]
 
 # Scale notes
 SCALE_NOTES = [
-    {0, 2, 4, 5, 7, 9, 11}, # MAJOR
-    {0, 2, 3, 5, 7, 8, 10}, # NATURAL MINOR
-    {0, 2, 3, 5, 7, 8, 11}, # MARMONIC MINOR
-    {0, 2, 3, 5, 7, 9, 11}  # MELODIC MINOR
+    {0, 2, 4, 5, 7, 9}, # MAJOR
+    {0, 2, 3, 5, 7, 8}, # NATURAL MINOR
+    {0, 2, 3, 5, 7, 8}, # MARMONIC MINOR
+    {0, 2, 3, 5, 7, 9}  # MELODIC MINOR
 ]
+# SCALE_NOTES = [{} for _ in range(4)]
 
 SCALE_WEIGHTS = [
     SCALE_MAJOR_W,
@@ -142,7 +143,7 @@ def abs_note_seq_to_chrod_seq(
     chord_scale_scores = []
     for w in CHORD_WEIGHTS:
         for root in range(12):
-            if root in SCALE_NOTES[detected_scale_type]:
+            if root in SCALE_NOTES[detected_scale_type] or len(SCALE_NOTES[detected_scale_type]) == 0:
                 _w = w[-root:] + w[:-root]
                 chord_scale_scores.append(
                     sum([a * b for a, b in zip(scale_weight, _w)])
