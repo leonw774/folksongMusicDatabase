@@ -31,7 +31,15 @@ CHORD_TYPE_MAP = [0, 1, 1, 3, 3, 7, 7, 7]
 SCALE_MAJOR_W           = [10, -10, 10, -10, 10, 10, -8, 10, -10, 10, -10, 10]
 SCALE_NATURAL_MINOR_W   = [10, -10, 10, 10, -10, 10, -8, 10, 10, -10, 10, -10]
 SCALE_HARMONIC_MINOR_W  = [10, -10, 10, 10, -10, 10, -10, 10, 10, -10, -10, 10]
-SCALE_MELODIC_MINOR_W   = [10, -10, 10, 10, -10, 10, -10, 10, 2, 2, 2, 2]
+SCALE_MELODIC_MINOR_W   = [10, -10, 10, 10, -10, 10, -10, 10, -3, 3, -3, 3]
+
+# Scale notes
+SCALE_NOTES = [
+    {0, 2, 4, 5, 7, 9, 11}, # MAJOR
+    {0, 2, 3, 5, 7, 8, 10}, # NATURAL MINOR
+    {0, 2, 3, 5, 7, 8, 11}, # MARMONIC MINOR
+    {0, 2, 3, 5, 7, 9, 11}  # MELODIC MINOR
+]
 
 SCALE_WEIGHTS = [
     SCALE_MAJOR_W,
@@ -49,7 +57,7 @@ OLD_CHORD_NOTES = [
 ]
 
 
-NEG_MAX = float('-inf')
+LARGE_NEG = float('-inf')
 
 
 def argmax(x):
@@ -134,17 +142,20 @@ def abs_note_seq_to_chrod_seq(
     chord_scale_scores = []
     for w in CHORD_WEIGHTS:
         for root in range(12):
-            _w = w[-root:] + w[:-root]
-            chord_scale_scores.append(
-                sum([a * b for a, b in zip(scale_weight, _w)])
-            )
+            if root in SCALE_NOTES[detected_scale_type]:
+                _w = w[-root:] + w[:-root]
+                chord_scale_scores.append(
+                    sum([a * b for a, b in zip(scale_weight, _w)])
+                )
+            else:
+                chord_scale_scores.append(LARGE_NEG)
 
     # get top half possible normalized_chord: that is 24 in 48
-    k = mean(chord_scale_scores)
-    chord_scale_scores = [
-        i - k if i > k else NEG_MAX
-        for i in chord_scale_scores
-    ]
+    # k = mean(chord_scale_scores)
+    # chord_scale_scores = [
+    #     i - k if i > k else LARGE_NEG
+    #     for i in chord_scale_scores
+    # ]
     chord_scale_prob = softmax(chord_scale_scores, temperature=tau)
 
     # print('---')
