@@ -41,7 +41,7 @@ from typing import List, Mapping, Set, Tuple
 
 from tqdm import tqdm
 
-from musical_things import MusicNote, Chord, Metre, NOTE_NAME_TO_NUMBER, NOTE_NAME, chord_to_str, chord_seq_to_str
+from musical_things import MusicNote, Chord, Metre, NOTE_NAME_TO_NUMBER, NOTE_NAME, chord_to_str
 from detector import (
     normalized_note_seq_to_music_key,
     abs_note_seq_to_chrod_seq,
